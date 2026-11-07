@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dodge Block Dogs</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            /* Prevent scroll on mobile */
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            background-color: #2a2a35;
+            max-width: 100%;
+            max-height: 100%;
+            /* For web, keep it phone-ratio-ish, max out on actual mobile */
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Responsive Canvas Setup
+        const LOGICAL_WIDTH = 400;
+        const LOGICAL_HEIGHT = 700;
+
+        function resize() {
+            // Keep aspect ratio
+            const scale = Math.min(window.innerWidth / LOGICAL_WIDTH, window.innerHeight / LOGICAL_HEIGHT);
+            canvas.width = LOGICAL_WIDTH;
+            canvas.height = LOGICAL_HEIGHT;
+            canvas.style.width = `${LOGICAL_WIDTH * scale}px`;
+            canvas.style.height = `${LOGICAL_HEIGHT * scale}px`;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // -------------------------
+        // GAME STATE
+        // -------------------------
+        const SCREENS = {
+            DASHBOARD: 0,
+            STORE: 1,
+            MINIGAME_MENU: 2,
+            MG_DODGE: 3,
+            MG_CATCH: 4,
+            MG_JUMP: 5
+        };
+
+        const state = {
+            currentScreen: SCREENS.DASHBOARD,
+            lastTime: performance.now(),
+            dt: 0,
+
+            // Tamagotchi Vitals (0 - 100)
+            vitals: {
+                hunger: 80,
+                happiness: 80,
+                energy: 100,
+                stress: 20
+            },
+
+            // Economy & Inventory
+            coins: 50,
+            activePetIndex: 0,
+            pets: [
+                { id: 'dachshund', name: 'Salchi', emoji: '🌭', unlocked: true },
+                { id: 'jackrussell', name: 'Jack', emoji: '🐶', unlocked: false, price: 100 },
+                { id: 'pug', name: 'Puggy', emoji: '🍞', unlocked: false, price: 250 }
+            ],
+
+            // Minigame specific states
+            minigame: {
+                active: false,
+                score: 0,
+                playerX: LOGICAL_WIDTH / 2,
+                playerY: LOGICAL_HEIGHT - 100,
+                playerVelocityY: 0,
+                entities: [],
+                speed: 1,
+                gameOver: false
+            }
+        };
+
+        // Cache objects for drawing
+        const cache = {
+            images: {},
+            lastBgColor: null
+        };
+
+        // -------------------------
+        // GAME LOOP
+        // -------------------------
+        function loop(timestamp) {
+            // Delta time calculation
+            state.dt = (timestamp - state.lastTime) / 1000;
+            state.lastTime = timestamp;
+
+            // Cap dt to avoid huge jumps when tab is inactive
+            if (state.dt > 0.1) state.dt = 0.1;
+
+            update(state.dt);
+            draw();
+
+            requestAnimationFrame(loop);
+        }
+
+        function updateMinigameCatch(dt) {
+            if (state.minigame.gameOver) return;
+
+            // Timer (use score as timer in this case, or add specific timer)
+            if (state.minigame.timer === undefined) state.minigame.timer = 30; // 30 seconds
+            state.minigame.timer -= dt;
+
+            if (state.minigame.timer <= 0) {
+                state.minigame.gameOver = true;
+                return;
+            }
+
+            // Spawn entities (prizes and bad items)
+            if (Math.random() < 0.05 + (state.minigame.speed * 0.0001)) {
+                const isBad = Math.random() > 0.7; // 30% chance of bad item
+                state.minigame.entities.push({
+                    x: Math.random() * (LOGICAL_WIDTH - 40),
+                    y: -40,
+                    w: 40,
+                    h: 40,
+                    type: isBad ? 'bad' : 'good'
+                });
+            }
+
+            // Move entities
+            for (let i = state.minigame.entities.length - 1; i >= 0; i--) {
+                let e = state.minigame.entities[i];
+                e.y += state.minigame.speed * dt;
+
+                // Collision
+                if (e.y < state.minigame.playerY + 40 &&
+                    e.y + e.h > state.minigame.playerY &&
+                    e.x < state.minigame.playerX + 40 &&
+                    e.x + e.w > state.minigame.playerX) {
+
+                    if (e.type === 'good') {
+                        state.minigame.score += 2;
+                    } else {
+                        state.minigame.score = Math.max(0, state.minigame.score - 5);
+                    }
+                    state.minigame.entities.splice(i, 1);
+                    continue;
+                }
+
+                // Remove out of bounds
+                if (e.y > LOGICAL_HEIGHT) {
+                    state.minigame.entities.splice(i, 1);
+                }
+            }
+        }
+
+        function updateMinigameJump(dt) {
+            if (state.minigame.gameOver) return;
+
+            const mg = state.minigame;
+
+            // Gravity
+            mg.playerVelocityY += 1500 * dt;
+            mg.playerY += mg.playerVelocityY * dt;
+
+            // Initialize platforms if empty
+            if (mg.entities.length === 0) {
+                // Ground platform
+                mg.entities.push({ x: 0, y: LOGICAL_HEIGHT - 50, w: LOGICAL_WIDTH, h: 50, type: 'ground' });
+                // Random platforms
+                for (let i = 0; i < 5; i++) {
+                    mg.entities.push({
+                        x: Math.random() * (LOGICAL_WIDTH - 80),
+                        y: LOGICAL_HEIGHT - 200 - (i * 150),
+                        w: 80,
+                        h: 20
+                    });
+                }
+            }
+
+            // Move camera / platforms down as player goes up
+            if (mg.playerY < LOGICAL_HEIGHT / 2) {
+                const diff = (LOGICAL_HEIGHT / 2) - mg.playerY;
+                mg.playerY = LOGICAL_HEIGHT / 2;
+                for (let e of mg.entities) {
+                    e.y += diff;
+                }
+                mg.score += Math.floor(diff / 10);
+            }
+
+            // Platform collision (falling down only)
+            if (mg.playerVelocityY > 0) {
+                for (let e of mg.entities) {
+                    if (mg.playerY + 40 > e.y &&
+                        mg.playerY + 40 < e.y + e.h + 20 && // 20px tolerance
+                        mg.playerX + 40 > e.x &&
+                        mg.playerX < e.x + e.w) {
+
+                        mg.playerY = e.y - 40;
+                        mg.playerVelocityY = -700; // bounce
+                    }
+                }
+            }
+
+            // Remove off-screen platforms and generate new ones
+            for (let i = mg.entities.length - 1; i >= 0; i--) {
+                let e = mg.entities[i];
+                if (e.y > LOGICAL_HEIGHT) {
+                    mg.entities.splice(i, 1);
+                    mg.entities.push({
+                        x: Math.random() * (LOGICAL_WIDTH - 80),
+                        y: -50, // Spawn above screen
+                        w: 80,
+                        h: 20
+                    });
+                }
+            }
+
+            // Game over condition (fall off screen)
+            if (mg.playerY > LOGICAL_HEIGHT) {
+                mg.gameOver = true;
+            }
+        }
+
+        function updateMinigameDodge(dt) {
+            if (state.minigame.gameOver) return;
+
+            // Spawn entities
+            if (Math.random() < 0.05 + (state.minigame.speed * 0.0001)) {
+                state.minigame.entities.push({
+                    x: Math.random() * (LOGICAL_WIDTH - 40),
+                    y: -40,
+                    w: 40,
+                    h: 40
+                });
+            }
+
+            // Move entities
+            for (let i = state.minigame.entities.length - 1; i >= 0; i--) {
+                let e = state.minigame.entities[i];
+                e.y += state.minigame.speed * dt;
+
+                // Collision
+                if (e.y < state.minigame.playerY + 40 &&
+                    e.y + e.h > state.minigame.playerY &&
+                    e.x < state.minigame.playerX + 40 &&
+                    e.x + e.w > state.minigame.playerX) {
+                    state.minigame.gameOver = true;
+                }
+
+                // Remove out of bounds and increase score
+                if (e.y > LOGICAL_HEIGHT) {
+                    state.minigame.entities.splice(i, 1);
+                    state.minigame.score++;
+                    state.minigame.speed += 5; // Increase difficulty
+                }
+            }
+        }
+
+        function update(dt) {
+            // Vitals decay in Dashboard
+            if (state.currentScreen === SCREENS.DASHBOARD) {
+                // Slower decay for display purposes
+                const decayRate = 0.5 * dt;
+                state.vitals.hunger = Math.max(0, state.vitals.hunger - decayRate);
+                state.vitals.happiness = Math.max(0, state.vitals.happiness - decayRate);
+                state.vitals.energy = Math.max(0, state.vitals.energy - decayRate);
+                state.vitals.stress = Math.min(100, state.vitals.stress + decayRate);
+            } else if (state.currentScreen === SCREENS.MG_DODGE) {
+                updateMinigameDodge(dt);
+            } else if (state.currentScreen === SCREENS.MG_CATCH) {
+                updateMinigameCatch(dt);
+            } else if (state.currentScreen === SCREENS.MG_JUMP) {
+                updateMinigameJump(dt);
+            }
+        }
+
+        // -------------------------
+        // RENDERING FUNCTIONS
+        // -------------------------
+        function drawProgressBar(x, y, width, height, value, color) {
+            ctx.fillStyle = '#111';
+            ctx.fillRect(x, y, width, height);
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, (value / 100) * width, height);
+            ctx.strokeStyle = '#fff';
+            ctx.strokeRect(x, y, width, height);
+        }
+
+        function drawButton(x, y, width, height, text, bgColor) {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(x, y, width, height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x + width / 2, y + height / 2);
+            // Return rect for click detection
+            return { x, y, w: width, h: height };
+        }
+
+        let uiRects = {}; // Store clickable areas
+
+        function drawStore() {
+            uiRects = {};
+            uiRects.items = []; // Array of items
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '30px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('STORE / PETS', LOGICAL_WIDTH / 2, 50);
+
+            ctx.fillStyle = '#f1c40f';
+            ctx.font = '20px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`💰 ${state.coins}`, 20, 50);
+
+            // Draw list of pets
+            for (let i = 0; i < state.pets.length; i++) {
+                const pet = state.pets[i];
+                const y = 100 + i * 100;
+
+                // Item bg
+                ctx.fillStyle = state.activePetIndex === i ? '#2ecc71' : '#34495e';
+                ctx.fillRect(20, y, LOGICAL_WIDTH - 40, 80);
+
+                // Emoji & Name
+                ctx.fillStyle = '#fff';
+                ctx.font = '40px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(pet.emoji, 40, y + 40);
+
+                ctx.font = '20px sans-serif';
+                ctx.fillText(pet.name, 100, y + 40);
+
+                // Action area
+                let actionText = '';
+                if (pet.unlocked) {
+                    actionText = state.activePetIndex === i ? 'Equipped' : 'Equip';
+                } else {
+                    actionText = `💰 ${pet.price}`;
+                }
+
+                ctx.textAlign = 'right';
+                ctx.fillText(actionText, LOGICAL_WIDTH - 40, y + 40);
+
+                uiRects.items.push({ x: 20, y: y, w: LOGICAL_WIDTH - 40, h: 80, petIndex: i });
+            }
+
+            uiRects.back = drawButton(20, LOGICAL_HEIGHT - 80, LOGICAL_WIDTH - 40, 50, 'BACK', '#e74c3c');
+        }
+
+        function drawMinigameCommon() {
+            // Draw Player
+            const pet = state.pets[state.activePetIndex];
+            ctx.font = '40px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(pet.emoji, state.minigame.playerX + 20, state.minigame.playerY);
+
+            // Score
+            ctx.fillStyle = '#fff';
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Score: ${state.minigame.score}`, 10, 30);
+
+            // Game Over overlay
+            if (state.minigame.gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+                ctx.fillStyle = '#fff';
+                ctx.font = '40px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 - 40);
+                ctx.font = '20px sans-serif';
+                ctx.fillText('Tap anywhere to exit', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 20);
+                ctx.fillText(`Coins earned: ${state.minigame.score}`, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 60);
+            }
+        }
+
+        function drawMinigameDodge() {
+            // Draw Entities
+            ctx.fillStyle = '#e74c3c';
+            for (let e of state.minigame.entities) {
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+            }
+            drawMinigameCommon();
+        }
+
+        function drawMinigameCatch() {
+            // Draw Entities
+            for (let e of state.minigame.entities) {
+                ctx.fillStyle = e.type === 'good' ? '#f1c40f' : '#8e44ad';
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+            }
+
+            // Draw Timer
+            ctx.fillStyle = '#fff';
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'right';
+            const timeLeft = state.minigame.timer ? Math.ceil(state.minigame.timer) : 30;
+            ctx.fillText(`Time: ${timeLeft}s`, LOGICAL_WIDTH - 10, 30);
+
+            drawMinigameCommon();
+        }
+
+        function drawMinigameJump() {
+            // Draw platforms
+            ctx.fillStyle = '#27ae60';
+            for (let e of state.minigame.entities) {
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+            }
+            drawMinigameCommon();
+        }
+
+        function drawMinigameMenu() {
+            uiRects = {};
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '30px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('MINIGAMES', LOGICAL_WIDTH / 2, 50);
+
+            uiRects.mgDodge = drawButton(40, 150, LOGICAL_WIDTH - 80, 80, 'Dodge Block', '#3498db');
+            uiRects.mgCatch = drawButton(40, 250, LOGICAL_WIDTH - 80, 80, 'Catch Prizes', '#9b59b6');
+            uiRects.mgJump = drawButton(40, 350, LOGICAL_WIDTH - 80, 80, 'Jump Platforms', '#e67e22');
+
+            uiRects.back = drawButton(20, LOGICAL_HEIGHT - 80, LOGICAL_WIDTH - 40, 50, 'BACK', '#e74c3c');
+        }
+
+        function drawDashboard() {
+            uiRects = {};
+
+            // Top Bar: Coins
+            ctx.fillStyle = '#f1c40f';
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`💰 ${state.coins}`, 20, 40);
+
+            // Vitals
+            ctx.fillStyle = '#fff';
+            ctx.font = '16px sans-serif';
+            ctx.fillText('Hunger', 20, 80);
+            drawProgressBar(100, 65, 200, 20, state.vitals.hunger, '#e74c3c');
+
+            ctx.fillText('Happiness', 20, 110);
+            drawProgressBar(100, 95, 200, 20, state.vitals.happiness, '#2ecc71');
+
+            ctx.fillText('Energy', 20, 140);
+            drawProgressBar(100, 125, 200, 20, state.vitals.energy, '#3498db');
+
+            // Draw Pet (Emoji for simplicity, can be replaced with sprites)
+            const pet = state.pets[state.activePetIndex];
+            ctx.font = '120px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(pet.emoji, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2);
+
+            ctx.font = '30px sans-serif';
+            ctx.fillStyle = '#fff';
+            ctx.fillText(pet.name, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 50);
+
+            // Buttons
+            uiRects.feed = drawButton(20, LOGICAL_HEIGHT - 160, 170, 50, 'Feed 🥩', '#e67e22');
+            uiRects.pet = drawButton(210, LOGICAL_HEIGHT - 160, 170, 50, 'Pet 💖', '#e84393');
+            uiRects.store = drawButton(20, LOGICAL_HEIGHT - 90, 170, 60, 'Store 🏪', '#9b59b6');
+            uiRects.play = drawButton(210, LOGICAL_HEIGHT - 90, 170, 60, 'Play 🎮', '#34495e');
+        }
+
+        function draw() {
+            // Clear screen
+            ctx.fillStyle = '#2a2a35';
+            ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+            // Screen router
+            switch (state.currentScreen) {
+                case SCREENS.DASHBOARD:
+                    drawDashboard();
+                    break;
+                case SCREENS.STORE:
+                    drawStore();
+                    break;
+                case SCREENS.MINIGAME_MENU:
+                    drawMinigameMenu();
+                    break;
+                case SCREENS.MG_DODGE:
+                    drawMinigameDodge();
+                    break;
+                case SCREENS.MG_CATCH:
+                    drawMinigameCatch();
+                    break;
+                case SCREENS.MG_JUMP:
+                    drawMinigameJump();
+                    break;
+            }
+        }
+
+        // -------------------------
+        // EVENT HANDLERS
+        // -------------------------
+        function getScale() {
+            return Math.min(window.innerWidth / LOGICAL_WIDTH, window.innerHeight / LOGICAL_HEIGHT);
+        }
+
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scale = getScale();
+            // Calculate coordinates based on canvas logical size vs actual on-screen size
+            const x = (evt.clientX - rect.left) / scale;
+            const y = (evt.clientY - rect.top) / scale;
+            return { x, y };
+        }
+
+        function isInside(pos, rect) {
+            if (!rect) return false;
+            return pos.x > rect.x && pos.x < rect.x + rect.w && pos.y < rect.y + rect.h && pos.y > rect.y;
+        }
+
+        function handleStoreClick(pos) {
+            if (isInside(pos, uiRects.back)) {
+                state.currentScreen = SCREENS.DASHBOARD;
+                return;
+            }
+            if (uiRects.items) {
+                for (let i = 0; i < uiRects.items.length; i++) {
+                    if (isInside(pos, uiRects.items[i])) {
+                        const pet = state.pets[i];
+                        if (pet.unlocked) {
+                            state.activePetIndex = i;
+                        } else if (state.coins >= pet.price) {
+                            state.coins -= pet.price;
+                            pet.unlocked = true;
+                            state.activePetIndex = i;
+                        }
+                    }
+                }
+            }
+        }
+
+        function handleMenuClick(pos) {
+            if (isInside(pos, uiRects.back)) {
+                state.currentScreen = SCREENS.DASHBOARD;
+                return;
+            }
+            if (isInside(pos, uiRects.mgDodge)) {
+                startMinigame(SCREENS.MG_DODGE);
+            } else if (isInside(pos, uiRects.mgCatch)) {
+                startMinigame(SCREENS.MG_CATCH);
+            } else if (isInside(pos, uiRects.mgJump)) {
+                startMinigame(SCREENS.MG_JUMP);
+            }
+        }
+
+        function startMinigame(gameScreen) {
+            state.currentScreen = gameScreen;
+            state.minigame.active = true;
+            state.minigame.score = 0;
+            state.minigame.gameOver = false;
+            state.minigame.entities = [];
+            state.minigame.speed = 200; // units per second
+            state.minigame.playerX = LOGICAL_WIDTH / 2;
+            state.minigame.playerY = LOGICAL_HEIGHT - 100;
+            state.minigame.playerVelocityY = 0;
+            uiRects = {}; // Clear UI rects
+        }
+
+        function handleDashboardClick(pos) {
+            if (isInside(pos, uiRects.feed)) {
+                if (state.coins >= 5) {
+                    state.coins -= 5;
+                    state.vitals.hunger = Math.min(100, state.vitals.hunger + 20);
+                }
+            } else if (isInside(pos, uiRects.pet)) {
+                state.vitals.happiness = Math.min(100, state.vitals.happiness + 15);
+                state.vitals.stress = Math.max(0, state.vitals.stress - 15);
+            } else if (isInside(pos, uiRects.store)) {
+                state.currentScreen = SCREENS.STORE;
+            } else if (isInside(pos, uiRects.play)) {
+                state.currentScreen = SCREENS.MINIGAME_MENU;
+            }
+        }
+
+        function handleGlobalClick(pos) {
+            switch (state.currentScreen) {
+                case SCREENS.DASHBOARD:
+                    handleDashboardClick(pos);
+                    break;
+                case SCREENS.STORE:
+                    handleStoreClick(pos);
+                    break;
+                case SCREENS.MINIGAME_MENU:
+                    handleMenuClick(pos);
+                    break;
+                case SCREENS.MG_DODGE:
+                case SCREENS.MG_CATCH:
+                case SCREENS.MG_JUMP:
+                    if (state.minigame.gameOver) {
+                        // Click to exit minigame
+                        state.coins += state.minigame.score;
+                        state.currentScreen = SCREENS.DASHBOARD;
+                    } else {
+                        // Minigame specific input
+                        if (state.currentScreen === SCREENS.MG_JUMP) {
+                            // Jump
+                            if (state.minigame.playerY >= LOGICAL_HEIGHT - 100) { // Very simple ground check
+                                state.minigame.playerVelocityY = -600;
+                            }
+                        } else {
+                            // Move left/right
+                            if (pos.x < LOGICAL_WIDTH / 2) {
+                                state.minigame.playerX = Math.max(20, state.minigame.playerX - 60);
+                            } else {
+                                state.minigame.playerX = Math.min(LOGICAL_WIDTH - 20, state.minigame.playerX + 60);
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        canvas.addEventListener('mousedown', function (evt) {
+            handleGlobalClick(getMousePos(evt));
+        }, false);
+
+        canvas.addEventListener('touchstart', function (evt) {
+            evt.preventDefault();
+            handleGlobalClick(getMousePos(evt.touches[0]));
+        }, { passive: false });
+
+        // Start Loop
+        requestAnimationFrame(loop);
+    </script>
+</body>
+
+</html>
+
+And paste this into App.js:
+
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { WebView } from 'react-native-webview';
+import { Asset } from 'expo-asset';
+import { StatusBar } from 'expo-status-bar';
+
+export default function App() {
+const [htmlUri, setHtmlUri] = useState(null);
+
+useEffect(() => {
+async function loadHtml() {
+const [{ localUri }] = await Asset.loadAsync(require('./assets/game.html'));
+setHtmlUri(localUri);
+}
+loadHtml();
+}, []);
+
+if (!htmlUri) {
+return
+<View style={styles.container} />;
+}
+
+return (
+<View style={styles.container}>
+    <StatusBar style="light" />
+    <WebView source={{ uri: htmlUri }} style={styles.webview} scrollEnabled={false} bounces={false}
+        showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false} />
+</View>
+);
+}
+
+const styles = StyleSheet.create({
+container: {
+flex: 1,
+backgroundColor: '#1a1a1a',
+},
+webview: {
+flex: 1,
+backgroundColor: 'transparent',
+},
+});
