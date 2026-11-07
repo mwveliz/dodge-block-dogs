@@ -1,0 +1,15 @@
+## 📜 License & Commercial Rights
+
+**Copyright (c) 2026 Miguel Delgado Veliz. All Rights Reserved.**
+
+This project uses a **Dual-License** model to remain open for developers and educational purposes while protecting the commercial integrity of the game:
+
+### 1. Source Code License (AGPL-3.0)
+The underlying source code, game engine logic, and architecture of **Dodge Block Dogs (DBD)** are licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. 
+* You are free to view, fork, study, and modify the source code.
+* Any modifications, derivative works, or web-hosted versions of this code must also be distributed under the same AGPL-3.0 license with full attribution to the original author, **Miguel Delgado Veliz**.
+
+### 2. Game Assets, Branding & Commercial Redistribution (Proprietary / CC BY-NC-ND 4.0)
+The game title (**"Dodge Block Dogs"** / **"DBD"**), logos, character designs, dog sprites, accessories, audio, and visual artwork are **NOT** covered under the AGPL-3.0 license. They are licensed under **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)**:
+* **No Commercial Use:** Nobody other than the original author (Miguel Delgado Veliz) is permitted to sell, monetize (via ads or in-app purchases), or redistribute compiled versions of this game on any digital storefront (including but not limited to Itch.io, Google Play Store, Apple App Store, or Steam).
+* **Support the Official Release:** If you enjoy the game and want to play the official build or support its creator, please purchase the official version on [Itch.io](#) or [Google Play](#).
