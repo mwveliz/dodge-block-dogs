@@ -14,7 +14,7 @@
 [![Languages](https://img.shields.io/badge/Languages-ES%20%7C%20EN%20%7C%20JA%20%7C%20PT-ffd700.svg)](#multi-language-support)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
-[🕹️ **Play Live on Web**](https://mwveliz.github.io/dodge-block-dogs/game.html) &bull; [🎮 **Itch.io Store**](https://mwveliz.itch.io/dodge-block-dogs) &bull; [🚀 **Official Landing Launcher**](https://mwveliz.github.io/dodge-block-dogs/) &bull; [📦 **Download Offline ZIP**](https://mwveliz.github.io/dodge-block-dogs/dodge-block-dogs-itchio.zip)
+[🕹️ **Play Live on Web**](https://mwveliz.github.io/dodge-block-dogs/) &bull; [🎮 **Itch.io Store**](https://mwveliz.itch.io/dodge-block-dogs) &bull; [🚀 **Official Landing Launcher**](https://mwveliz.github.io/dodge-block-dogs/landing.html) &bull; [📦 **Download Offline ZIP**](https://mwveliz.github.io/dodge-block-dogs/dodge-block-dogs-itchio.zip)
 
 </div>
 

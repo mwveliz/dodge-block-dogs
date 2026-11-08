@@ -154,7 +154,8 @@ function wrapHtml(title, bodyHtml) {
 <body>
     <div class="doc-container">
         <div class="back-nav">
-            <a href="./">← Volver al Lanzador / Back to Launcher</a>
+            <a href="./landing.html">← Volver al Lanzador / Back to Launcher</a>
+            <a href="./index.html" style="margin-left: 10px;">🕹️ Jugar / Play Game</a>
         </div>
         ${bodyHtml}
         <footer>
@@ -173,6 +174,12 @@ if (fs.existsSync(privacySrc)) {
     const dest = path.join(outDir, 'privacy.html');
     fs.writeFileSync(dest, html, 'utf8');
     console.log(`Generated: ${dest} (${fs.statSync(dest).size} bytes)`);
+
+    if (outDir !== rootDir) {
+        const rootDest = path.join(rootDir, 'privacy.html');
+        fs.writeFileSync(rootDest, html, 'utf8');
+        console.log(`Generated root copy: ${rootDest}`);
+    }
 }
 
 // Convert Terms of Service
@@ -183,6 +190,12 @@ if (fs.existsSync(termsSrc)) {
     const dest = path.join(outDir, 'terms.html');
     fs.writeFileSync(dest, html, 'utf8');
     console.log(`Generated: ${dest} (${fs.statSync(dest).size} bytes)`);
+
+    if (outDir !== rootDir) {
+        const rootDest = path.join(rootDir, 'terms.html');
+        fs.writeFileSync(rootDest, html, 'utf8');
+        console.log(`Generated root copy: ${rootDest}`);
+    }
 }
 
 console.log('Documentation build completed successfully!');

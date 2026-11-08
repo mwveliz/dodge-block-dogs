@@ -36,15 +36,17 @@ jobs:
           node scripts/build-game.js
           # 2. Generar el paquete ZIP de Itch.io / descarga offline
           node scripts/package-itchio.js
-          # 3. Copiar landing page y recursos estáticos
-          cp landing.html _site/index.html
-          cp assets/game.html _site/game.html
+          # 3. Generar Privacy Policy y Terms of Service con estilos y navegación limpia
+          node scripts/build-docs.js _site
+          # 4. Copiar juego, launcher y recursos estáticos
+          cp index.html _site/index.html
+          cp game.html _site/game.html
+          cp landing.html _site/landing.html
           cp assets/icon.png _site/icon.png
           cp assets/favicon.png _site/favicon.png
           if [ -f assets/three.min.js ]; then cp assets/three.min.js _site/three.min.js; fi
+          if [ -f dodge-block-dogs-itchio.zip ]; then cp dodge-block-dogs-itchio.zip _site/dodge-block-dogs-itchio.zip; fi
           if [ -f dist/itchio/dodge-block-dogs-itchio.zip ]; then cp dist/itchio/dodge-block-dogs-itchio.zip _site/dodge-block-dogs-itchio.zip; fi
-          # 4. Generar Privacy Policy y Terms of Service con estilos y navegación limpia
-          node scripts/build-docs.js _site
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -7,6 +7,7 @@ const gamePath = path.join(__dirname, '../src/game/game.js');
 
 const gameHtmlDest = path.join(__dirname, '../assets/game.html');
 const indexHtmlDest = path.join(__dirname, '../index.html');
+const rootGameHtmlDest = path.join(__dirname, '../game.html');
 
 console.log('Reading source files...');
 const template = fs.readFileSync(templatePath, 'utf8');
@@ -20,8 +21,10 @@ const finalHtml = template
 
 fs.writeFileSync(gameHtmlDest, finalHtml, 'utf8');
 fs.writeFileSync(indexHtmlDest, finalHtml, 'utf8');
+fs.writeFileSync(rootGameHtmlDest, finalHtml, 'utf8');
 
 console.log('Build completed successfully!');
 console.log('Destination sizes:');
 console.log(' - assets/game.html:', fs.statSync(gameHtmlDest).size, 'bytes');
 console.log(' - index.html:', fs.statSync(indexHtmlDest).size, 'bytes');
+console.log(' - game.html:', fs.statSync(rootGameHtmlDest).size, 'bytes');

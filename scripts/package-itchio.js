@@ -29,6 +29,11 @@ try {
     execSync(`cd "${distDir}" && zip -9 -q "dodge-block-dogs-itchio.zip" index.html`, { stdio: 'inherit' });
     console.log('ZIP package created successfully: ' + zipFile);
     console.log('ZIP package size: ' + fs.statSync(zipFile).size + ' bytes');
+
+    // Also copy to root for direct web download
+    const rootZip = path.join(rootDir, 'dodge-block-dogs-itchio.zip');
+    fs.copyFileSync(zipFile, rootZip);
+    console.log('Copied root package: ' + rootZip);
 } catch (e) {
     console.error('Failed to create zip:', e.message);
 }
