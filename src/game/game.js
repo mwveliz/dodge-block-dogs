@@ -4218,6 +4218,7 @@ let uiHitboxes = [];
 let wardrobeTab = 'hats';
 let photoPose = 'smile';
 let photoFilter = 'normal';
+let arcadeMenuPage = 0;
 
 function registerHitbox(id, x, y, w, h, data = {}) {
     uiHitboxes.push({ id, x, y, w, h, data });
@@ -4758,16 +4759,46 @@ function drawMinigamesMenuHUD() {
             desc: t('mg_bounce_desc'),
             color: '#e53e3e',
             highScore: state.highScores.MG_BOUNCE || 0
+        },
+        {
+            type: SCREENS.MG_INVADERS,
+            title: t('mg_invaders_title'),
+            desc: t('mg_invaders_desc'),
+            color: '#9f7aea',
+            highScore: state.highScores.MG_INVADERS || 0
+        },
+        {
+            type: SCREENS.MG_FLAP,
+            title: t('mg_flap_title'),
+            desc: t('mg_flap_desc'),
+            color: '#38b2ac',
+            highScore: state.highScores.MG_FLAP || 0
+        },
+        {
+            type: SCREENS.MG_DIGGER,
+            title: t('mg_digger_title'),
+            desc: t('mg_digger_desc'),
+            color: '#dd6b20',
+            highScore: state.highScores.MG_DIGGER || 0
+        },
+        {
+            type: SCREENS.MG_RHYTHM,
+            title: t('mg_rhythm_title'),
+            desc: t('mg_rhythm_desc'),
+            color: '#ed64a6',
+            highScore: state.highScores.MG_RHYTHM || 0
         }
     ];
 
-    games.forEach((g, idx) => {
+    const pageGames = arcadeMenuPage === 0 ? games.slice(0, 6) : games.slice(6, 10);
+
+    pageGames.forEach((g, idx) => {
         const col = idx % 2;
         const row = Math.floor(idx / 2);
         const gx = 16 + col * 198;
-        const gy = 76 + row * 190;
+        const gy = 76 + row * 175;
         const gw = 190;
-        const gh = 180;
+        const gh = 165;
 
         uictx.fillStyle = '#14182c';
         uictx.fillRect(gx, gy, gw, gh);
@@ -4782,7 +4813,7 @@ function drawMinigamesMenuHUD() {
         uictx.fillStyle = g.color;
         uictx.font = 'bold 11px "Courier New", monospace';
         uictx.textAlign = 'left';
-        uictx.fillText(g.title, gx + 8, gy + 22);
+        uictx.fillText(g.title, gx + 8, gy + 20);
 
         uictx.fillStyle = '#cbd5e0';
         uictx.font = '10px "Courier New", monospace';
@@ -4792,16 +4823,24 @@ function drawMinigamesMenuHUD() {
             if ((line1 + w).length < 24) line1 += w + ' ';
             else line2 += w + ' ';
         }
-        uictx.fillText(line1, gx + 8, gy + 42);
-        uictx.fillText(line2, gx + 8, gy + 56);
+        uictx.fillText(line1, gx + 8, gy + 38);
+        uictx.fillText(line2, gx + 8, gy + 52);
 
         uictx.fillStyle = '#ffd700';
         uictx.font = 'bold 11px "Courier New", monospace';
-        uictx.fillText('🏆 ' + t('record') + ': ' + g.highScore, gx + 8, gy + 120);
+        uictx.fillText('🏆 ' + t('record') + ': ' + g.highScore, gx + 8, gy + 112);
 
-        drawPixelButton(gx + 10, gy + 134, gw - 20, 36, t('play'), g.color);
+        drawPixelButton(gx + 10, gy + 124, gw - 20, 32, t('play'), g.color);
         registerHitbox('start_' + g.type, gx, gy, gw, gh, { type: g.type });
     });
+
+    // Page switcher tabs
+    const pageBtnW = (LOGICAL_WIDTH - 40) / 2;
+    drawPixelButton(16, LOGICAL_HEIGHT - 108, pageBtnW, 38, '◀ PÁG 1 (1-6)', arcadeMenuPage === 0 ? '#3182ce' : '#1a202c', arcadeMenuPage === 0);
+    registerHitbox('arcade_page_0', 16, LOGICAL_HEIGHT - 108, pageBtnW, 38);
+
+    drawPixelButton(LOGICAL_WIDTH / 2 + 4, LOGICAL_HEIGHT - 108, pageBtnW, 38, 'PÁG 2 (7-10) ▶', arcadeMenuPage === 1 ? '#3182ce' : '#1a202c', arcadeMenuPage === 1);
+    registerHitbox('arcade_page_1', LOGICAL_WIDTH / 2 + 4, LOGICAL_HEIGHT - 108, pageBtnW, 38);
 
     drawPixelButton(16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46, t('back_home'), '#e53e3e');
     registerHitbox('goto_dashboard', 16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46);
@@ -4942,6 +4981,212 @@ function drawActiveMinigameHUD(timeSec) {
         uictx.textBaseline = 'middle';
         uictx.fillText('🦴', 0, 0);
         uictx.restore();
+    } else if (minigameState.type === SCREENS.MG_INVADERS) {
+        // Draw starry cosmos background
+        uictx.fillStyle = 'rgba(255,255,255,0.18)';
+        for (let s = 0; s < 25; s++) {
+            const sx = ((s * 73 + timeSec * 15) % LOGICAL_WIDTH);
+            const sy = ((s * 137 + timeSec * 50) % LOGICAL_HEIGHT);
+            uictx.fillRect(sx, sy, 2, 2);
+        }
+
+        // Draw player lasers
+        for (const b of (minigameState.playerBullets || [])) {
+            uictx.fillStyle = '#00f0ff';
+            uictx.fillRect(b.x - 3, b.y, 6, 16);
+            uictx.fillStyle = '#ffffff';
+            uictx.fillRect(b.x - 1, b.y + 2, 2, 12);
+        }
+
+        // Draw alien invaders
+        for (const inv of (minigameState.invaders || [])) {
+            if (!inv.alive) continue;
+            uictx.save();
+            uictx.translate(inv.x, inv.y);
+            uictx.fillStyle = inv.color;
+            uictx.fillRect(-inv.w / 2, -inv.h / 2, inv.w, inv.h);
+            uictx.strokeStyle = '#ffffff';
+            uictx.lineWidth = 1.5;
+            uictx.strokeRect(-inv.w / 2, -inv.h / 2, inv.w, inv.h);
+            uictx.fillStyle = '#14182c';
+            uictx.font = '14px sans-serif';
+            uictx.textAlign = 'center';
+            uictx.textBaseline = 'middle';
+            uictx.fillText('👾', 0, 0);
+            uictx.restore();
+        }
+
+        // Draw invader bullets
+        for (const b of (minigameState.invaderBullets || [])) {
+            uictx.fillStyle = '#ff2a85';
+            uictx.beginPath();
+            uictx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+            uictx.fill();
+            uictx.strokeStyle = '#ffffff';
+            uictx.lineWidth = 1.5;
+            uictx.stroke();
+        }
+
+        // Jetpack flame under dog
+        const flameH = 8 + Math.random() * 8;
+        uictx.fillStyle = '#ffd700';
+        uictx.fillRect(minigameState.playerX - 6, minigameState.playerY + 18, 12, flameH);
+        uictx.fillStyle = '#ff2a85';
+        uictx.fillRect(minigameState.playerX - 3, minigameState.playerY + 18, 6, flameH * 0.6);
+    } else if (minigameState.type === SCREENS.MG_FLAP) {
+        // Draw neon bone pipes
+        for (const p of (minigameState.flapPipes || [])) {
+            uictx.fillStyle = '#1a365d';
+            uictx.fillRect(p.x, 0, p.w, p.gapY);
+            uictx.strokeStyle = '#38b2ac';
+            uictx.lineWidth = 2.5;
+            uictx.strokeRect(p.x, -5, p.w, p.gapY + 5);
+            uictx.fillStyle = '#38b2ac';
+            uictx.fillRect(p.x - 4, p.gapY - 18, p.w + 8, 18);
+            uictx.fillStyle = '#ffffff';
+            uictx.font = '14px sans-serif';
+            uictx.textAlign = 'center';
+            uictx.fillText('🦴', p.x + p.w / 2, p.gapY - 6);
+
+            const bottomY = p.gapY + p.gapSize;
+            const bottomH = LOGICAL_HEIGHT - bottomY;
+            uictx.fillStyle = '#1a365d';
+            uictx.fillRect(p.x, bottomY, p.w, bottomH);
+            uictx.strokeStyle = '#38b2ac';
+            uictx.lineWidth = 2.5;
+            uictx.strokeRect(p.x, bottomY, p.w, bottomH + 5);
+            uictx.fillStyle = '#38b2ac';
+            uictx.fillRect(p.x - 4, bottomY, p.w + 8, 18);
+            uictx.fillStyle = '#ffffff';
+            uictx.fillText('🦴', p.x + p.w / 2, bottomY + 14);
+        }
+
+        // Flapping wings on player
+        uictx.save();
+        uictx.translate(minigameState.playerX, minigameState.playerY);
+        const flapTilt = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (minigameState.flapVelocity || 0) * 0.002));
+        uictx.rotate(flapTilt);
+        uictx.font = '28px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.textBaseline = 'middle';
+        uictx.fillText('🪽', -18, -6);
+        uictx.fillText('🪽', 18, -6);
+        uictx.restore();
+    } else if (minigameState.type === SCREENS.MG_DIGGER) {
+        // Stratum grid
+        const colW = (LOGICAL_WIDTH - 40) / 5;
+        const startY = 210;
+        const blockH = 58;
+        if (minigameState.diggerGrid) {
+            minigameState.diggerGrid.forEach((row, rIdx) => {
+                const by = startY + rIdx * blockH;
+                row.forEach((block, cIdx) => {
+                    const bx = 20 + cIdx * colW;
+                    uictx.fillStyle = block.color;
+                    uictx.fillRect(bx, by, colW, blockH);
+                    uictx.strokeStyle = 'rgba(255,255,255,0.22)';
+                    uictx.lineWidth = 1.5;
+                    uictx.strokeRect(bx, by, colW, blockH);
+
+                    uictx.font = '18px sans-serif';
+                    uictx.textAlign = 'center';
+                    uictx.textBaseline = 'middle';
+                    let icon = '';
+                    if (block.type === 'fossil') icon = '🦴';
+                    else if (block.type === 'gem') icon = '💎';
+                    else if (block.type === 'stamina') icon = '⚡';
+                    else if (block.type === 'rock') icon = '🪨';
+                    if (icon) uictx.fillText(icon, bx + colW / 2, by + blockH / 2);
+
+                    if (block.hp > 1) {
+                        uictx.fillStyle = '#ffffff';
+                        uictx.font = 'bold 11px monospace';
+                        uictx.fillText('HP ' + block.hp, bx + colW / 2, by + blockH - 8);
+                    }
+                });
+            });
+        }
+
+        // Drill head beneath puppy
+        uictx.save();
+        uictx.translate(minigameState.playerX, minigameState.playerY + 28);
+        uictx.fillStyle = '#ffd700';
+        uictx.beginPath();
+        uictx.moveTo(-10, 0);
+        uictx.lineTo(10, 0);
+        uictx.lineTo(0, 18);
+        uictx.closePath();
+        uictx.fill();
+        uictx.strokeStyle = '#ffffff';
+        uictx.stroke();
+        uictx.restore();
+
+        // Stamina gauge
+        uictx.fillStyle = '#1a202c';
+        uictx.fillRect(20, 64, LOGICAL_WIDTH - 40, 14);
+        uictx.fillStyle = (minigameState.stamina || 0) > 30 ? '#48bb78' : '#e53e3e';
+        uictx.fillRect(20, 64, ((minigameState.stamina || 0) / 100) * (LOGICAL_WIDTH - 40), 14);
+        uictx.strokeStyle = '#2d3748';
+        uictx.strokeRect(20, 64, LOGICAL_WIDTH - 40, 14);
+        uictx.fillStyle = '#ffffff';
+        uictx.font = 'bold 10px "Courier New", monospace';
+        uictx.textAlign = 'center';
+        uictx.fillText('⚡ ' + Math.ceil(minigameState.stamina || 0) + '% STAMINA | PROFUNDIDAD: ' + (minigameState.drillDepth || 0) + 'm', LOGICAL_WIDTH / 2, 75);
+    } else if (minigameState.type === SCREENS.MG_RHYTHM) {
+        // 4 musical lanes
+        const laneW = (LOGICAL_WIDTH - 40) / 4;
+        const laneColors = ['#ff2a85', '#00f0ff', '#ffd700', '#05ffa1'];
+        for (let l = 0; l < 4; l++) {
+            const lx = 20 + l * laneW;
+            uictx.fillStyle = 'rgba(20, 24, 44, 0.6)';
+            uictx.fillRect(lx, 60, laneW, LOGICAL_HEIGHT - 170);
+            uictx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            uictx.strokeRect(lx, 60, laneW, LOGICAL_HEIGHT - 170);
+        }
+        // Hit line
+        const hitLineY = LOGICAL_HEIGHT - 120;
+        uictx.strokeStyle = '#00f0ff';
+        uictx.lineWidth = 3;
+        uictx.beginPath();
+        uictx.moveTo(20, hitLineY);
+        uictx.lineTo(LOGICAL_WIDTH - 20, hitLineY);
+        uictx.stroke();
+        // Target hit pads
+        for (let l = 0; l < 4; l++) {
+            const lx = 20 + l * laneW + laneW / 2;
+            uictx.strokeStyle = laneColors[l];
+            uictx.lineWidth = 2;
+            uictx.beginPath();
+            uictx.arc(lx, hitLineY, 22, 0, Math.PI * 2);
+            uictx.stroke();
+        }
+        // Falling rhythm notes
+        if (minigameState.rhythmNotes) {
+            for (const n of minigameState.rhythmNotes) {
+                const nx = 20 + n.lane * laneW + laneW / 2;
+                uictx.save();
+                uictx.translate(nx, n.y);
+                uictx.fillStyle = laneColors[n.lane];
+                uictx.beginPath();
+                uictx.arc(0, 0, 18, 0, Math.PI * 2);
+                uictx.fill();
+                uictx.strokeStyle = '#ffffff';
+                uictx.lineWidth = 2;
+                uictx.stroke();
+                uictx.font = '16px sans-serif';
+                uictx.textAlign = 'center';
+                uictx.textBaseline = 'middle';
+                uictx.fillText(n.icon, 0, 0);
+                uictx.restore();
+            }
+        }
+        // Feedback popup text
+        if (minigameState.rhythmFeedbackTimer > 0 && minigameState.rhythmFeedback) {
+            uictx.fillStyle = minigameState.rhythmFeedback.startsWith('PERFECT') ? '#ffd700' : minigameState.rhythmFeedback.startsWith('GREAT') ? '#00f0ff' : '#e53e3e';
+            uictx.font = 'bold 22px "Courier New", monospace';
+            uictx.textAlign = 'center';
+            uictx.fillText(minigameState.rhythmFeedback, LOGICAL_WIDTH / 2, hitLineY - 45);
+        }
     }
 
     // 3D Dog synchronization with minigame position
@@ -4950,7 +5195,7 @@ function drawActiveMinigameHUD(timeSec) {
         const worldY = 0.5;
         const worldZ = ((minigameState.playerY / LOGICAL_HEIGHT) - 0.5) * 10;
         stage.currentDog.position.set(worldX, worldY, worldZ);
-        dogBuilder.updateDogAnimation(stage.currentDog, 1/60, timeSec, minigameState.speed, true, minigameState.gameOver ? 'sleepy' : 'happy');
+        dogBuilder.updateDogAnimation(stage.currentDog, 1/60, timeSec, minigameState.speed || 1.5, true, minigameState.gameOver ? 'sleepy' : 'happy');
     }
 
     uictx.fillStyle = 'rgba(12, 14, 24, 0.9)';
@@ -4982,11 +5227,21 @@ function drawActiveMinigameHUD(timeSec) {
         uictx.textAlign = 'right';
         uictx.font = 'bold 18px "Courier New", monospace';
         uictx.fillText('⏱ ' + Math.ceil(minigameState.timer) + 's', LOGICAL_WIDTH - 16, 36);
-    } else if (minigameState.type === SCREENS.MG_BOUNCE) {
+    } else if (minigameState.type === SCREENS.MG_BOUNCE || minigameState.type === SCREENS.MG_INVADERS || minigameState.type === SCREENS.MG_RHYTHM) {
         uictx.font = '16px sans-serif';
         uictx.textAlign = 'right';
         const hearts = '❤️'.repeat(Math.max(0, minigameState.lives));
         uictx.fillText(hearts, LOGICAL_WIDTH - 16, 36);
+    } else if (minigameState.type === SCREENS.MG_FLAP) {
+        uictx.fillStyle = '#00f0ff';
+        uictx.textAlign = 'right';
+        uictx.font = 'bold 16px "Courier New", monospace';
+        uictx.fillText('🦴 ' + (minigameState.flapScore || 0) + ' | 🏆 ' + minigameState.highScore, LOGICAL_WIDTH - 16, 36);
+    } else if (minigameState.type === SCREENS.MG_DIGGER) {
+        uictx.fillStyle = '#ffd700';
+        uictx.textAlign = 'right';
+        uictx.font = 'bold 16px "Courier New", monospace';
+        uictx.fillText('⛏️ ' + (minigameState.drillDepth || 0) + 'm | 🏆 ' + minigameState.highScore, LOGICAL_WIDTH - 16, 36);
     } else {
         uictx.fillStyle = '#a0aec0';
         uictx.textAlign = 'right';
@@ -5014,7 +5269,37 @@ function drawActiveMinigameHUD(timeSec) {
         uictx.fillText('⏱️ SLOW', buffX, buffY);
     }
 
-    if (minigameState.type === SCREENS.MG_LANE) {
+    if (minigameState.type === SCREENS.MG_INVADERS) {
+        drawPixelButton(20, LOGICAL_HEIGHT - 80, 85, 50, '◀◀', '#1a202c');
+        registerHitbox('steer_left', 20, LOGICAL_HEIGHT - 80, 85, 50);
+
+        drawPixelButton(LOGICAL_WIDTH / 2 - 50, LOGICAL_HEIGHT - 80, 100, 50, '⚡ FUEGO', '#9f7aea', true);
+        registerHitbox('invader_shoot', LOGICAL_WIDTH / 2 - 50, LOGICAL_HEIGHT - 80, 100, 50);
+
+        drawPixelButton(LOGICAL_WIDTH - 105, LOGICAL_HEIGHT - 80, 85, 50, '▶▶', '#1a202c');
+        registerHitbox('steer_right', LOGICAL_WIDTH - 105, LOGICAL_HEIGHT - 80, 85, 50);
+    } else if (minigameState.type === SCREENS.MG_FLAP) {
+        registerHitbox('flap_jump', 0, 56, LOGICAL_WIDTH, LOGICAL_HEIGHT - 136);
+        drawPixelButton(30, LOGICAL_HEIGHT - 75, LOGICAL_WIDTH - 60, 48, '🪽 ¡ALETEAR! (ESPACIO)', '#38b2ac', true);
+        registerHitbox('flap_jump', 30, LOGICAL_HEIGHT - 75, LOGICAL_WIDTH - 60, 48);
+    } else if (minigameState.type === SCREENS.MG_DIGGER) {
+        drawPixelButton(20, LOGICAL_HEIGHT - 80, 80, 50, '◀ COL', '#1a202c');
+        registerHitbox('drill_left', 20, LOGICAL_HEIGHT - 80, 80, 50);
+
+        drawPixelButton(LOGICAL_WIDTH / 2 - 55, LOGICAL_HEIGHT - 80, 110, 50, '⛏️ TALADRAR', '#dd6b20', true);
+        registerHitbox('drill_down', LOGICAL_WIDTH / 2 - 55, LOGICAL_HEIGHT - 80, 110, 50);
+
+        drawPixelButton(LOGICAL_WIDTH - 100, LOGICAL_HEIGHT - 80, 80, 50, 'COL ▶', '#1a202c');
+        registerHitbox('drill_right', LOGICAL_WIDTH - 100, LOGICAL_HEIGHT - 80, 80, 50);
+    } else if (minigameState.type === SCREENS.MG_RHYTHM) {
+        const laneW = (LOGICAL_WIDTH - 40) / 4;
+        const padColors = ['#ff2a85', '#00f0ff', '#ffd700', '#05ffa1'];
+        for (let l = 0; l < 4; l++) {
+            const bx = 20 + l * laneW;
+            drawPixelButton(bx + 2, LOGICAL_HEIGHT - 85, laneW - 4, 55, (l + 1) + ' 🐾', padColors[l]);
+            registerHitbox('rhythm_lane_' + l, bx + 2, LOGICAL_HEIGHT - 85, laneW - 4, 55);
+        }
+    } else if (minigameState.type === SCREENS.MG_LANE) {
         drawPixelButton(20, LOGICAL_HEIGHT - 80, 110, 50, '◀ IZQ', '#1a202c');
         registerHitbox('lane_left', 20, LOGICAL_HEIGHT - 80, 110, 50);
 
@@ -5221,6 +5506,118 @@ function drawMinigameGuessHUD(timeSec) {
         drawPixelButton(44, modalY + 210, LOGICAL_WIDTH - 88, 44, t('exit_home'), '#3182ce');
         registerHitbox('minigame_exit', 44, modalY + 210, LOGICAL_WIDTH - 88, 44);
     }
+}
+
+// --- SCREEN: OUTDOOR PARK & DISCOVERY WALK ---
+function drawParkWalkHUD(timeSec) {
+    const w = state.weather || 'day';
+    let skyTop = '#63b3ed', skyBottom = '#bee3f8';
+    if (w === 'sunset') { skyTop = '#ed8936'; skyBottom = '#9b2c2c'; }
+    else if (w === 'night') { skyTop = '#0a0d18'; skyBottom = '#1a202c'; }
+    else if (w === 'rain') { skyTop = '#2d3748'; skyBottom = '#4a5568'; }
+
+    const skyGrad = uictx.createLinearGradient(0, 0, 0, LOGICAL_HEIGHT * 0.55);
+    skyGrad.addColorStop(0, skyTop);
+    skyGrad.addColorStop(1, skyBottom);
+    uictx.fillStyle = skyGrad;
+    uictx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT * 0.55);
+
+    // Sun or Moon
+    if (w === 'night') {
+        uictx.fillStyle = '#fffff0';
+        uictx.beginPath();
+        uictx.arc(LOGICAL_WIDTH - 60, 90, 24, 0, Math.PI * 2);
+        uictx.fill();
+        uictx.fillStyle = skyTop;
+        uictx.beginPath();
+        uictx.arc(LOGICAL_WIDTH - 52, 85, 20, 0, Math.PI * 2);
+        uictx.fill();
+    } else if (w !== 'rain') {
+        uictx.fillStyle = w === 'sunset' ? '#ff6b6b' : '#ffd700';
+        uictx.beginPath();
+        uictx.arc(LOGICAL_WIDTH - 60, 90, 22, 0, Math.PI * 2);
+        uictx.fill();
+    }
+
+    // Lush Green Ground with walking trail
+    uictx.fillStyle = '#2f855a';
+    uictx.fillRect(0, LOGICAL_HEIGHT * 0.55, LOGICAL_WIDTH, LOGICAL_HEIGHT * 0.45);
+
+    // Dirt trail winding through the park
+    uictx.fillStyle = '#c05621';
+    uictx.fillRect(0, LOGICAL_HEIGHT * 0.65, LOGICAL_WIDTH, 70);
+    uictx.strokeStyle = '#9c4221';
+    uictx.lineWidth = 2;
+    uictx.strokeRect(0, LOGICAL_HEIGHT * 0.65, LOGICAL_WIDTH, 70);
+
+    // Parallax trees and flowers along the trail
+    const scrollX = ((minigameState.walkDistance || 0) * 20) % LOGICAL_WIDTH;
+    const parkScenery = [
+        { type: 'tree', offset: 40, y: LOGICAL_HEIGHT * 0.50 },
+        { type: 'flower', offset: 120, y: LOGICAL_HEIGHT * 0.61 },
+        { type: 'bench', offset: 200, y: LOGICAL_HEIGHT * 0.54 },
+        { type: 'hydrant', offset: 290, y: LOGICAL_HEIGHT * 0.63 },
+        { type: 'tree', offset: 370, y: LOGICAL_HEIGHT * 0.49 }
+    ];
+
+    uictx.font = '28px sans-serif';
+    uictx.textAlign = 'center';
+    uictx.textBaseline = 'bottom';
+    for (const item of parkScenery) {
+        let x = (item.offset - scrollX + LOGICAL_WIDTH * 2) % LOGICAL_WIDTH;
+        if (item.type === 'tree') uictx.fillText('🌲', x, item.y);
+        else if (item.type === 'flower') uictx.fillText('🌸', x, item.y);
+        else if (item.type === 'bench') uictx.fillText('🪑', x, item.y);
+        else if (item.type === 'hydrant') uictx.fillText('🚒', x, item.y);
+    }
+
+    // 3D dog positioned walking along the park trail
+    if (stage.currentDog) {
+        stage.currentDog.position.set(0, 0.4, 0);
+        dogBuilder.updateDogAnimation(stage.currentDog, 1/60, timeSec, 2.5, true, 'happy');
+    }
+
+    // Top Navigation & Stats Bar
+    uictx.fillStyle = 'rgba(12, 14, 24, 0.88)';
+    uictx.fillRect(0, 0, LOGICAL_WIDTH, 56);
+    uictx.strokeStyle = '#38a169';
+    uictx.lineWidth = 2;
+    uictx.strokeRect(0, 0, LOGICAL_WIDTH, 56);
+
+    uictx.fillStyle = '#05ffa1';
+    uictx.font = 'bold 18px "Courier New", monospace';
+    uictx.textAlign = 'left';
+    uictx.fillText('🌳 ' + t('park_title'), 16, 36);
+
+    uictx.fillStyle = '#ffd700';
+    uictx.font = 'bold 14px "Courier New", monospace';
+    uictx.textAlign = 'right';
+    uictx.fillText('👟 ' + Math.floor(minigameState.walkDistance || 0) + 'm | 🦴 +' + (minigameState.walkBonesFound || 0), LOGICAL_WIDTH - 16, 36);
+
+    // Weather rain droplets if raining
+    if (w === 'rain') {
+        uictx.strokeStyle = 'rgba(180, 220, 255, 0.55)';
+        uictx.lineWidth = 1.5;
+        for (let i = 0; i < 24; i++) {
+            const rx = ((i * 37 + timeSec * 160) % LOGICAL_WIDTH);
+            const ry = ((i * 61 + timeSec * 320) % LOGICAL_HEIGHT);
+            uictx.beginPath();
+            uictx.moveTo(rx, ry);
+            uictx.lineTo(rx - 3, ry + 12);
+            uictx.stroke();
+        }
+    }
+
+    // Interactive Activity Buttons
+    const btnW = (LOGICAL_WIDTH - 44) / 2;
+    drawPixelButton(16, LOGICAL_HEIGHT - 125, btnW, 52, '🔍 ' + t('sniff_btn'), '#38a169', true);
+    registerHitbox('park_action_sniff', 16, LOGICAL_HEIGHT - 125, btnW, 52);
+
+    drawPixelButton(LOGICAL_WIDTH / 2 + 6, LOGICAL_HEIGHT - 125, btnW, 52, '🐾 ' + t('greet_btn'), '#3182ce', true);
+    registerHitbox('park_action_greet', LOGICAL_WIDTH / 2 + 6, LOGICAL_HEIGHT - 125, btnW, 52);
+
+    drawPixelButton(16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46, t('back_home'), '#e53e3e');
+    registerHitbox('goto_dashboard', 16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46);
 }
 
 // --- SCREEN: POLAROID PHOTO STUDIO ---
