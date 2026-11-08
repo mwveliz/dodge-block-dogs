@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dodge Block Dogs (DBD) - Tamagotchi & Arcade</title>
+    <style>
+        :root {
+            --bg-color: #0d0f18;
+            --arcade-frame: #181b2a;
+            --accent-cyan: #00f0ff;
+            --accent-gold: #ffcc00;
+            --accent-pink: #ff2a85;
+            --accent-green: #05ffa1;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 50% 30%, #1e2238 0%, #0d0f18 80%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+        }
+
+        /* Container that wraps the canvas for mobile simulation on desktop and 100% on phones */
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 480px;
+            max-height: 860px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.15), 0 20px 40px rgba(0,0,0,0.8);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #111422;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            cursor: pointer;
+        }
+
+        /* Subtle retro scanline overlay for arcade flavor */
+        .scanlines {
+            pointer-events: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(
+                rgba(18, 16, 38, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 10;
+            opacity: 0.35;
+        }
+
+        /* Touch glow effect indicator */
+        .touch-feedback {
+            pointer-events: none;
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-cyan);
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 0;
+            transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+            z-index: 20;
+        }
+        .touch-feedback.active {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-wrapper">
+        <canvas id="gameCanvas"></canvas>
+        <div class="scanlines"></div>
+        <div id="touchFeedback" class="touch-feedback"></div>
+    </div>
+
+    <script>
+    /**
+     * ============================================================================
+     * DODGE BLOCK DOGS (DBD) - ENGINE ARCHITECTURE
+     * ============================================================================
+     * Pure 60 FPS Delta-Time Engine, Zero-Dependency Web Audio Synth,
+     * Procedural Pixel-Art Sprite Caching, Multi-Pet & Wardrobe System,
+     * 4 Addictive Arcade Minigames, and Battery-Saving Lifecycle Control.
+     */
+
+    // --- 1. SYSTEM AUDIO SYNTHESIZER (Web Audio API Chiptune) ---
+    class RetroAudioEngine {
+        constructor() {
+            this.ctx = null;
+            this.muted = false;
+            this.initialized = false;
+        }
+
+        init() {
+            if (this.initialized) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    this.ctx = new AudioCtx();
+                    this.initialized = true;
+                }
+            } catch (e) {
+                console.warn('AudioContext not available:', e);
+            }
+        }
+
+        play(type) {
+            if (this.muted) return;
+            if (!this.ctx) this.init();
+            if (!this.ctx) return;
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            switch (type) {
+                case 'click':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                    break;
+
+                case 'bark':
+                    // Cute two-pulse pup bark
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(380, now);
+                    osc.frequency.exponentialRampToValueAtTime(520, now + 0.06);
+                    osc.frequency.exponentialRampToValueAtTime(260, now + 0.12);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                    break;
+
+                case 'pet':
+                    // Gentle sweet chime
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.28);
+                    osc.start(now);
+                    osc.stop(now + 0.28);
+                    break;
+
+                case 'eat':
+                    // Crunchy munch sound
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(140, now + 0.04);
+                    osc.frequency.setValueAtTime(280, now + 0.08);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.14);
+                    osc.start(now);
+                    osc.stop(now + 0.14);
+                    break;
+
+                case 'coin':
+                    // Bright arcade ping
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(987.77, now); // B5
+                    osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                    break;
+
+                case 'jump':
+                    // Retro boing
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.16);
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                    break;
+
+                case 'near_miss':
+                    // Whoosh / high sparkle
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.linearRampToValueAtTime(1400, now + 0.1);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                    break;
+
+                case 'hit':
+                    // Deep impact thud
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.28);
+                    osc.start(now);
+                    osc.stop(now + 0.28);
+                    break;
+
+                case 'fanfare':
+                    // Victory triad
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = this.ctx.createOscillator();
+                        const noteGain = this.ctx.createGain();
+                        noteOsc.type = 'triangle';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.09);
+                        noteGain.gain.setValueAtTime(0.25, now + idx * 0.09);
+                        noteGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.09 + 0.2);
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(this.ctx.destination);
+                        noteOsc.start(now + idx * 0.09);
+                        noteOsc.stop(now + idx * 0.09 + 0.2);
+                    });
+                    break;
+            }
+        }
+    }
+
+    const audio = new RetroAudioEngine();
+
+    // --- 2. CONFIG & CONSTANTS ---
+    const LOGICAL_WIDTH = 420;
+    const LOGICAL_HEIGHT = 740;
+
+    const SCREENS = {
+        DASHBOARD: 'DASHBOARD',
+        WARDROBE: 'WARDROBE',
+        MINIGAMES: 'MINIGAMES',
+        MG_DODGE: 'MG_DODGE',
+        MG_CATCH: 'MG_CATCH',
+        MG_JUMP: 'MG_JUMP',
+        MG_LANE: 'MG_LANE'
+    };
+
+    // --- 3. DOG BREEDS & ACCESSORY DEFINITIONS ---
+    const DOG_BREEDS = [
+        {
+            id: 'dachshund',
+            name: 'Salchi (Dachshund)',
+            shortName: 'Salchi',
+            desc: 'Cuerpo largo, orejas caídas y gran corazón.',
+            color: '#9e4719',
+            bellyColor: '#c56c34',
+            earColor: '#6e2f0d',
+            eyeColor: '#2b1407',
+            noseColor: '#1c0c04',
+            bodyWidth: 46,
+            bodyHeight: 24,
+            headWidth: 26,
+            headHeight: 22,
+            snoutLen: 14,
+            earType: 'floppy_long',
+            tailType: 'pointy_long',
+            price: 0,
+            unlocked: true
+        },
+        {
+            id: 'jackrussell',
+            name: 'Jacky (Jack Russell)',
+            shortName: 'Jacky',
+            desc: 'Ágil, hiperactivo y lleno de energía.',
+            color: '#f5f5f5',
+            bellyColor: '#ffffff',
+            patchColor: '#a65b2d',
+            earColor: '#8a451e',
+            eyeColor: '#1c1c1c',
+            noseColor: '#111111',
+            bodyWidth: 38,
+            bodyHeight: 26,
+            headWidth: 26,
+            headHeight: 24,
+            snoutLen: 10,
+            earType: 'perky_folded',
+            tailType: 'stubby_up',
+            price: 150,
+            unlocked: false
+        },
+        {
+            id: 'pug',
+            name: 'Puggy (Carlino Pug)',
+            shortName: 'Puggy',
+            desc: 'Chaparrito, arrugado y experto en siestas.',
+            color: '#d6c098',
+            bellyColor: '#edd8b6',
+            maskColor: '#2c2520',
+            earColor: '#241e1a',
+            eyeColor: '#111',
+            noseColor: '#111',
+            bodyWidth: 42,
+            bodyHeight: 30,
+            headWidth: 28,
+            headHeight: 26,
+            snoutLen: 6,
+            earType: 'small_button',
+            tailType: 'curly',
+            price: 300,
+            unlocked: false
+        },
+        {
+            id: 'shiba',
+            name: 'Doge (Shiba Inu)',
+            shortName: 'Doge',
+            desc: 'Mítico, sonriente y emperador de los memes.',
+            color: '#df822b',
+            bellyColor: '#fff5e6',
+            earColor: '#b45a10',
+            eyeColor: '#26170d',
+            noseColor: '#150c07',
+            bodyWidth: 40,
+            bodyHeight: 28,
+            headWidth: 26,
+            headHeight: 25,
+            snoutLen: 11,
+            earType: 'erect_triangle',
+            tailType: 'curly_fluffy',
+            price: 500,
+            unlocked: false
+        },
+        {
+            id: 'corgi',
+            name: 'Waffles (Corgi Real)',
+            shortName: 'Waffles',
+            desc: 'Patitas cortas, orejas gigantes y trasero feliz.',
+            color: '#ea8b39',
+            bellyColor: '#ffffff',
+            earColor: '#ea8b39',
+            eyeColor: '#22150c',
+            noseColor: '#100a06',
+            bodyWidth: 42,
+            bodyHeight: 27,
+            headWidth: 27,
+            headHeight: 24,
+            snoutLen: 10,
+            earType: 'huge_radar',
+            tailType: 'bobtail',
+            price: 800,
+            unlocked: false
+        }
+    ];
+
+    const ACCESSORIES = {
+        hats: [
+            { id: 'none', name: 'Ninguno', price: 0, unlocked: true },
+            { id: 'party', name: 'Gorro Fiesta 🎉', price: 60, unlocked: false },
+            { id: 'detective', name: 'Detective 🕵️', price: 140, unlocked: false },
+            { id: 'crown', name: 'Corona Real 👑', price: 350, unlocked: false },
+            { id: 'beanie', name: 'Gorro Beanie 🧶', price: 100, unlocked: false },
+            { id: 'visor', name: 'Visor Cyber 🥽', price: 250, unlocked: false }
+        ],
+        glasses: [
+            { id: 'none', name: 'Ninguno', price: 0, unlocked: true },
+            { id: 'shades', name: 'Gafas Thug 😎', price: 80, unlocked: false },
+            { id: 'retro', name: 'Lentes Retro 👓', price: 120, unlocked: false },
+            { id: 'monocle', name: 'Monóculo Chic 🧐', price: 190, unlocked: false },
+            { id: 'anime', name: 'Ojos Estrella ✨', price: 220, unlocked: false }
+        ],
+        neck: [
+            { id: 'none', name: 'Ninguno', price: 0, unlocked: true },
+            { id: 'red_bandana', name: 'Bandana Roja 🧣', price: 50, unlocked: false },
+            { id: 'gold_bone', name: 'Collar Hueso Oro 🦴', price: 150, unlocked: false },
+            { id: 'spiked', name: 'Collar Púas 🎸', price: 200, unlocked: false },
+            { id: 'bowtie', name: 'Pajarita Dapper 👔', price: 120, unlocked: false }
+        ]
+    };
+
+    // --- 4. PERSISTENT STATE MANAGEMENT ---
+    const STORAGE_KEY = 'DODGE_BLOCK_DOGS_SAVE_V2';
+
+    const defaultState = {
+        bones: 120,
+        activePetIndex: 0,
+        unlockedPets: ['dachshund'],
+        equipped: {
+            hat: 'none',
+            glasses: 'none',
+            neck: 'none'
+        },
+        unlockedHats: ['none'],
+        unlockedGlasses: ['none'],
+        unlockedNeck: ['none'],
+        vitals: {
+            hunger: 85,
+            happiness: 90,
+            energy: 95,
+            stress: 15,
+            lastTick: Date.now()
+        },
+        highScores: {
+            MG_DODGE: 0,
+            MG_CATCH: 0,
+            MG_JUMP: 0,
+            MG_LANE: 0
+        },
+        soundEnabled: true
+    };
+
+    let state = loadSavedState();
+
+    function loadSavedState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                return Object.assign({}, defaultState, parsed);
+            }
+        } catch (e) {
+            console.warn('Storage read fallback', e);
+        }
+        return JSON.parse(JSON.stringify(defaultState));
+    }
+
+    function saveState() {
+        try {
+            state.vitals.lastTick = Date.now();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+            // Memory safe fallback
+        }
+    }
+
+    // Apply unlocks to local arrays
+    function syncUnlocks() {
+        DOG_BREEDS.forEach(dog => {
+            dog.unlocked = state.unlockedPets.includes(dog.id);
+        });
+        ACCESSORIES.hats.forEach(item => {
+            item.unlocked = state.unlockedHats.includes(item.id);
+        });
+        ACCESSORIES.glasses.forEach(item => {
+            item.unlocked = state.unlockedGlasses.includes(item.id);
+        });
+        ACCESSORIES.neck.forEach(item => {
+            item.unlocked = state.unlockedNeck.includes(item.id);
+        });
+    }
+    syncUnlocks();
+
+    // --- 5. SPRITE GENERATION & PIXEL-ART CACHE SYSTEM ---
+    const spriteCache = new Map();
+
+    function getSpriteKey(breedId, hatId, glassesId, neckId, frame, emotion) {
+        return `${breedId}_${hatId}_${glassesId}_${neckId}_${frame}_${emotion}`;
+    }
+
+    /**
+     * Procedural Pixel-Art Dog Renderer.
+     * Renders crisp 32-bit pixelated dogs with layered customizable accessories
+     * directly into offscreen cached canvases to guarantee zero runtime lag at 60 FPS.
+     */
+    function renderDogToCanvas(breed, hatId, glassesId, neckId, frame = 0, emotion = 'normal') {
+        const offCanvas = document.createElement('canvas');
+        const size = 120;
+        offCanvas.width = size;
+        offCanvas.height = size;
+        const octx = offCanvas.getContext('2d');
+        octx.imageSmoothingEnabled = false;
+
+        const cx = size / 2;
+        const cy = size / 2 + 15;
+
+        // Subtle animation bounce
+        const bounce = Math.sin(frame * Math.PI * 2) * 2.5;
+        const breath = Math.cos(frame * Math.PI * 2) * 1.5;
+
+        // Shadow under dog
+        octx.fillStyle = 'rgba(10, 12, 22, 0.4)';
+        octx.beginPath();
+        octx.ellipse(cx, cy + 22, breed.bodyWidth * 0.7, 7, 0, 0, Math.PI * 2);
+        octx.fill();
+
+        // 1. TAIL
+        octx.save();
+        octx.translate(cx - breed.bodyWidth / 2 + 4, cy + 2 + bounce);
+        const tailWag = Math.sin(frame * Math.PI * 4) * (emotion === 'happy' ? 0.45 : 0.25);
+        octx.rotate(tailWag);
+        octx.fillStyle = breed.color;
+
+        if (breed.tailType === 'pointy_long') {
+            octx.fillRect(-16, -6, 16, 6);
+            octx.fillRect(-22, -10, 8, 5);
+        } else if (breed.tailType === 'stubby_up') {
+            octx.fillRect(-6, -14, 6, 14);
+        } else if (breed.tailType === 'curly' || breed.tailType === 'curly_fluffy') {
+            octx.fillRect(-10, -12, 10, 6);
+            octx.fillRect(-14, -8, 6, 8);
+            octx.fillRect(-8, -16, 6, 6);
+        } else {
+            // Bobtail / short
+            octx.fillRect(-8, -6, 8, 7);
+        }
+        octx.restore();
+
+        // 2. BACK LEGS
+        octx.fillStyle = breed.earColor || '#5a2205';
+        octx.fillRect(cx - breed.bodyWidth / 2 + 4, cy + breed.bodyHeight / 2 - 2, 7, 12);
+        octx.fillRect(cx + breed.bodyWidth / 2 - 14, cy + breed.bodyHeight / 2 - 2, 7, 12);
+
+        // 3. BODY
+        octx.fillStyle = breed.color;
+        octx.fillRect(
+            cx - breed.bodyWidth / 2,
+            cy - breed.bodyHeight / 2 + bounce,
+            breed.bodyWidth,
+            breed.bodyHeight + breath
+        );
+
+        // Belly accent
+        if (breed.bellyColor) {
+            octx.fillStyle = breed.bellyColor;
+            octx.fillRect(
+                cx - breed.bodyWidth / 4,
+                cy + bounce,
+                breed.bodyWidth / 2,
+                breed.bodyHeight / 2 - 2
+            );
+        }
+
+        // Dog-specific markings (e.g. Jack Russell brown patches)
+        if (breed.patchColor) {
+            octx.fillStyle = breed.patchColor;
+            octx.fillRect(cx - breed.bodyWidth / 3, cy - breed.bodyHeight / 3 + bounce, 12, 12);
+        }
+
+        // 4. FRONT LEGS
+        octx.fillStyle = breed.color;
+        octx.fillRect(cx - breed.bodyWidth / 2 + 10, cy + breed.bodyHeight / 2 + bounce, 8, 12);
+        octx.fillRect(cx + breed.bodyWidth / 2 - 8, cy + breed.bodyHeight / 2 + bounce, 8, 12);
+
+        // Paws
+        octx.fillStyle = breed.bellyColor || breed.color;
+        octx.fillRect(cx - breed.bodyWidth / 2 + 10, cy + breed.bodyHeight / 2 + 9 + bounce, 8, 4);
+        octx.fillRect(cx + breed.bodyWidth / 2 - 8, cy + breed.bodyHeight / 2 + 9 + bounce, 8, 4);
+
+        // 5. HEAD
+        const headX = cx + breed.bodyWidth / 2 - 12;
+        const headY = cy - breed.bodyHeight / 2 - 10 + bounce;
+
+        octx.fillStyle = breed.color;
+        octx.fillRect(headX, headY, breed.headWidth, breed.headHeight);
+
+        // Pug Mask / Cheek White
+        if (breed.maskColor) {
+            octx.fillStyle = breed.maskColor;
+            octx.fillRect(headX + breed.headWidth - 10, headY + 8, 12, 14);
+        }
+
+        // 6. SNOUT & NOSE
+        const snoutX = headX + breed.headWidth - 4;
+        const snoutY = headY + breed.headHeight - 13;
+        octx.fillStyle = breed.maskColor || breed.bellyColor || breed.color;
+        octx.fillRect(snoutX, snoutY, breed.snoutLen, 10);
+
+        // Nose
+        octx.fillStyle = breed.noseColor;
+        octx.fillRect(snoutX + breed.snoutLen - 3, snoutY + 1, 4, 4);
+
+        // Mouth / Happy Tongue
+        if (emotion === 'happy') {
+            octx.fillStyle = '#ff4d79'; // pink tongue
+            octx.fillRect(snoutX + breed.snoutLen - 6, snoutY + 8, 5, 6);
+        } else {
+            octx.fillStyle = '#222';
+            octx.fillRect(snoutX + breed.snoutLen - 5, snoutY + 7, 4, 2);
+        }
+
+        // 7. EARS
+        octx.fillStyle = breed.earColor;
+        if (breed.earType === 'floppy_long') {
+            // Dachshund long floppy ear
+            octx.fillRect(headX + 2, headY + 2, 8, 20);
+            octx.fillRect(headX + 4, headY + 20, 6, 4);
+        } else if (breed.earType === 'erect_triangle') {
+            // Shiba Inu triangular perky ears
+            octx.beginPath();
+            octx.moveTo(headX + 2, headY);
+            octx.lineTo(headX + 8, headY - 14);
+            octx.lineTo(headX + 14, headY);
+            octx.fill();
+            // Inner ear
+            octx.fillStyle = '#ffdede';
+            octx.fillRect(headX + 6, headY - 8, 4, 7);
+        } else if (breed.earType === 'huge_radar') {
+            // Corgi giant ears
+            octx.fillRect(headX + 4, headY - 16, 10, 18);
+            octx.fillStyle = '#ffdede';
+            octx.fillRect(headX + 6, headY - 14, 6, 14);
+        } else if (breed.earType === 'perky_folded') {
+            // Jack Russell folded ear
+            octx.fillRect(headX + 4, headY - 8, 10, 10);
+            octx.fillRect(headX + 6, headY - 12, 8, 6);
+        } else {
+            // Small button ears (Pug)
+            octx.fillRect(headX + 2, headY + 2, 7, 10);
+        }
+
+        // 8. EYES
+        const eyeX = headX + breed.headWidth - 10;
+        const eyeY = headY + 6;
+
+        if (emotion === 'sleepy') {
+            octx.fillStyle = '#111';
+            octx.fillRect(eyeX, eyeY + 2, 6, 2);
+        } else if (emotion === 'happy') {
+            // Cheerful curve
+            octx.fillStyle = '#111';
+            octx.fillRect(eyeX, eyeY + 1, 6, 3);
+            octx.fillStyle = '#fff';
+            octx.fillRect(eyeX + 1, eyeY + 3, 4, 1);
+        } else {
+            // Big lively pupil
+            octx.fillStyle = '#ffffff';
+            octx.fillRect(eyeX, eyeY, 6, 6);
+            octx.fillStyle = breed.eyeColor;
+            octx.fillRect(eyeX + 2, eyeY + 1, 4, 4);
+            // Glint
+            octx.fillStyle = '#ffffff';
+            octx.fillRect(eyeX + 2, eyeY + 1, 2, 2);
+        }
+
+        // --- ACCESSORY LAYER 1: NECKWEAR ---
+        if (neckId && neckId !== 'none') {
+            const neckX = headX - 2;
+            const neckY = cy + bounce + 2;
+
+            if (neckId === 'red_bandana') {
+                octx.fillStyle = '#e63946';
+                octx.fillRect(neckX, neckY - 2, 10, 8);
+                // Triangle drape
+                octx.beginPath();
+                octx.moveTo(neckX, neckY + 4);
+                octx.lineTo(neckX + 10, neckY + 4);
+                octx.lineTo(neckX + 5, neckY + 13);
+                octx.fill();
+                // Polka dot
+                octx.fillStyle = '#ffffff';
+                octx.fillRect(neckX + 4, neckY + 5, 2, 2);
+            } else if (neckId === 'gold_bone') {
+                octx.fillStyle = '#2b6cb0'; // blue collar
+                octx.fillRect(neckX, neckY - 2, 9, 5);
+                // Golden bone pendant
+                octx.fillStyle = '#ffd700';
+                octx.fillRect(neckX + 2, neckY + 4, 6, 3);
+                octx.fillRect(neckX + 1, neckY + 3, 2, 5);
+                octx.fillRect(neckX + 7, neckY + 3, 2, 5);
+            } else if (neckId === 'spiked') {
+                octx.fillStyle = '#222222';
+                octx.fillRect(neckX, neckY - 2, 9, 6);
+                octx.fillStyle = '#e2e8f0'; // silver spikes
+                octx.fillRect(neckX + 1, neckY - 4, 2, 3);
+                octx.fillRect(neckX + 4, neckY - 4, 2, 3);
+                octx.fillRect(neckX + 7, neckY - 4, 2, 3);
+            } else if (neckId === 'bowtie') {
+                octx.fillStyle = '#c53030';
+                octx.fillRect(neckX + 1, neckY, 4, 5);
+                octx.fillRect(neckX + 6, neckY, 4, 5);
+                octx.fillStyle = '#ffd700';
+                octx.fillRect(neckX + 4, neckY + 1, 3, 3);
+            }
+        }
+
+        // --- ACCESSORY LAYER 2: EYEWEAR ---
+        if (glassesId && glassesId !== 'none') {
+            if (glassesId === 'shades') {
+                // Thug / Cool Pixel Shades
+                octx.fillStyle = '#0a0a0a';
+                octx.fillRect(eyeX - 4, eyeY - 2, 14, 8);
+                // White reflex glint
+                octx.fillStyle = '#ffffff';
+                octx.fillRect(eyeX - 2, eyeY - 1, 2, 2);
+                octx.fillRect(eyeX + 4, eyeY - 1, 2, 2);
+            } else if (glassesId === 'retro') {
+                // Round gold frames
+                octx.strokeStyle = '#ffd700';
+                octx.lineWidth = 2;
+                octx.strokeRect(eyeX - 3, eyeY - 2, 8, 8);
+                octx.strokeRect(eyeX + 5, eyeY - 2, 6, 8);
+            } else if (glassesId === 'monocle') {
+                octx.strokeStyle = '#f6e05e';
+                octx.lineWidth = 2;
+                octx.strokeRect(eyeX, eyeY - 1, 8, 8);
+                octx.fillStyle = 'rgba(237, 242, 247, 0.4)';
+                octx.fillRect(eyeX, eyeY - 1, 8, 8);
+                // Hanging golden cord
+                octx.fillStyle = '#d69e2e';
+                octx.fillRect(eyeX + 2, eyeY + 7, 2, 6);
+            } else if (glassesId === 'anime') {
+                // Sparkle stars
+                octx.fillStyle = '#f6e05e';
+                octx.font = '14px sans-serif';
+                octx.fillText('★', eyeX - 2, eyeY + 7);
+            }
+        }
+
+        // --- ACCESSORY LAYER 3: HEADWEAR ---
+        if (hatId && hatId !== 'none') {
+            const hatBaseX = headX + 4;
+            const hatBaseY = headY - 4;
+
+            if (hatId === 'party') {
+                // Striped birthday cone
+                octx.fillStyle = '#ff007f';
+                octx.beginPath();
+                octx.moveTo(hatBaseX, hatBaseY);
+                octx.lineTo(hatBaseX + 16, hatBaseY);
+                octx.lineTo(hatBaseX + 8, hatBaseY - 22);
+                octx.fill();
+
+                // Yellow festive stripe
+                octx.fillStyle = '#ffea00';
+                octx.fillRect(hatBaseX + 3, hatBaseY - 8, 10, 4);
+
+                // Top pompom
+                octx.fillStyle = '#00f0ff';
+                octx.beginPath();
+                octx.arc(hatBaseX + 8, hatBaseY - 23, 4, 0, Math.PI * 2);
+                octx.fill();
+            } else if (hatId === 'crown') {
+                // Royal Golden Crown
+                octx.fillStyle = '#ffd700';
+                octx.fillRect(hatBaseX - 2, hatBaseY - 6, 20, 6);
+                // 3 peaks
+                octx.fillRect(hatBaseX - 2, hatBaseY - 14, 5, 8);
+                octx.fillRect(hatBaseX + 6, hatBaseY - 17, 5, 11);
+                octx.fillRect(hatBaseX + 13, hatBaseY - 14, 5, 8);
+                // Rubies
+                octx.fillStyle = '#e53e3e';
+                octx.fillRect(hatBaseX, hatBaseY - 4, 3, 3);
+                octx.fillRect(hatBaseX + 7, hatBaseY - 4, 3, 3);
+                octx.fillRect(hatBaseX + 14, hatBaseY - 4, 3, 3);
+            } else if (hatId === 'detective') {
+                // Sherlock houndstooth cap
+                octx.fillStyle = '#718096';
+                octx.fillRect(hatBaseX - 6, hatBaseY - 2, 26, 4);
+                octx.fillRect(hatBaseX - 2, hatBaseY - 10, 20, 9);
+                octx.fillStyle = '#4a5568';
+                octx.fillRect(hatBaseX + 2, hatBaseY - 12, 12, 3);
+            } else if (hatId === 'beanie') {
+                // Slouchy red beanie
+                octx.fillStyle = '#e53e3e';
+                octx.beginPath();
+                octx.arc(hatBaseX + 8, hatBaseY - 4, 12, Math.PI, 0);
+                octx.fill();
+                octx.fillStyle = '#c53030';
+                octx.fillRect(hatBaseX - 4, hatBaseY - 4, 24, 5);
+                octx.fillStyle = '#fff';
+                octx.fillRect(hatBaseX + 5, hatBaseY - 16, 6, 6);
+            } else if (hatId === 'visor') {
+                // Cyberpunk neon visor
+                octx.fillStyle = '#00f0ff';
+                octx.fillRect(hatBaseX - 2, hatBaseY - 4, 22, 6);
+                octx.fillStyle = '#ff007f';
+                octx.fillRect(hatBaseX + 2, hatBaseY - 8, 14, 4);
+            }
+        }
+
+        return offCanvas;
+    }
+
+    function getCachedDogSprite(breed, hatId, glassesId, neckId, animFrame = 0, emotion = 'normal') {
+        const frameIndex = Math.floor(animFrame * 8) % 8; // 8 discrete sub-frames
+        const key = getSpriteKey(breed.id, hatId, glassesId, neckId, frameIndex, emotion);
+        if (!spriteCache.has(key)) {
+            const canvas = renderDogToCanvas(breed, hatId, glassesId, neckId, frameIndex / 8, emotion);
+            spriteCache.set(key, canvas);
+        }
+        return spriteCache.get(key);
+    }
+
+    // --- 6. FLOATING PARTICLES & VFX ENGINE ---
+    class ParticleSystem {
+        constructor() {
+            this.particles = [];
+            this.floatTexts = [];
+        }
+
+        emit(x, y, count = 8, type = 'star') {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 40 + Math.random() * 140;
+                this.particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - (type === 'heart' ? 40 : 0),
+                    size: 3 + Math.random() * 5,
+                    color: type === 'heart' ? '#ff3366' :
+                           type === 'gold' ? '#ffcc00' :
+                           type === 'spark' ? '#00f0ff' : '#ffffff',
+                    life: 1.0,
+                    decay: 1.2 + Math.random() * 1.5,
+                    type
+                });
+            }
+        }
+
+        addText(text, x, y, color = '#00f0ff') {
+            this.floatTexts.push({
+                text, x, y,
+                vy: -60,
+                color,
+                life: 1.0,
+                decay: 1.0
+            });
+        }
+
+        update(dt) {
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                const p = this.particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vy += 80 * dt; // gravity
+                p.life -= p.decay * dt;
+                if (p.life <= 0) this.particles.splice(i, 1);
+            }
+
+            for (let i = this.floatTexts.length - 1; i >= 0; i--) {
+                const t = this.floatTexts[i];
+                t.y += t.vy * dt;
+                t.life -= t.decay * dt;
+                if (t.life <= 0) this.floatTexts.splice(i, 1);
+            }
+        }
+
+        draw(ctx) {
+            // Draw particles
+            for (const p of this.particles) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+
+                if (p.type === 'heart') {
+                    // Draw mini heart
+                    const s = p.size;
+                    ctx.beginPath();
+                    ctx.arc(p.x - s/2, p.y - s/2, s/2, Math.PI, 0, false);
+                    ctx.arc(p.x + s/2, p.y - s/2, s/2, Math.PI, 0, false);
+                    ctx.lineTo(p.x, p.y + s);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    // Pixel star / spark
+                    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+                }
+                ctx.restore();
+            }
+
+            // Draw floating texts
+            for (const t of this.floatTexts) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, t.life);
+                ctx.font = 'bold 18px "Courier New", monospace';
+                ctx.fillStyle = '#000000';
+                ctx.fillText(t.text, t.x + 2, t.y + 2);
+                ctx.fillStyle = t.color;
+                ctx.fillText(t.text, t.x, t.y);
+                ctx.restore();
+            }
+        }
+    }
+
+    const vfx = new ParticleSystem();
+
+    // --- 7. MINIGAMES MANAGER & LOGIC ---
+    const minigameState = {
+        type: null,
+        active: false,
+        score: 0,
+        highScore: 0,
+        lives: 3,
+        timer: 30,
+        combo: 0,
+        playerX: LOGICAL_WIDTH / 2,
+        playerY: LOGICAL_HEIGHT - 130,
+        playerVx: 0,
+        playerVy: 0,
+        entities: [],
+        speed: 240,
+        gameOver: false,
+        earnedBones: 0,
+        screenShake: 0,
+        nearMissCooldown: 0,
+        laneIndex: 1 // For 3-lane minigame (0: Left, 1: Center, 2: Right)
+    };
+
+    function startMinigame(type) {
+        audio.play('bark');
+        minigameState.type = type;
+        minigameState.active = true;
+        minigameState.score = 0;
+        minigameState.lives = 3;
+        minigameState.timer = 30;
+        minigameState.combo = 0;
+        minigameState.gameOver = false;
+        minigameState.earnedBones = 0;
+        minigameState.entities = [];
+        minigameState.screenShake = 0;
+        minigameState.highScore = state.highScores[type] || 0;
+
+        minigameState.playerX = LOGICAL_WIDTH / 2;
+        minigameState.playerY = LOGICAL_HEIGHT - 140;
+        minigameState.playerVx = 0;
+        minigameState.playerVy = 0;
+
+        if (type === SCREENS.MG_DODGE) {
+            minigameState.speed = 220;
+        } else if (type === SCREENS.MG_CATCH) {
+            minigameState.speed = 200;
+            minigameState.timer = 35;
+        } else if (type === SCREENS.MG_JUMP) {
+            minigameState.playerY = LOGICAL_HEIGHT - 120;
+            minigameState.playerVy = -500;
+            // Generate initial platforms
+            minigameState.entities.push({ x: 0, y: LOGICAL_HEIGHT - 60, w: LOGICAL_WIDTH, h: 24, type: 'ground' });
+            for (let i = 0; i < 6; i++) {
+                minigameState.entities.push({
+                    x: 30 + Math.random() * (LOGICAL_WIDTH - 140),
+                    y: LOGICAL_HEIGHT - 160 - (i * 110),
+                    w: 80,
+                    h: 18,
+                    type: Math.random() > 0.3 ? 'normal' : 'spring',
+                    vx: Math.random() > 0.6 ? 50 : 0
+                });
+            }
+        } else if (type === SCREENS.MG_LANE) {
+            minigameState.laneIndex = 1;
+            minigameState.speed = 280;
+        }
+
+        currentScreen = type;
+    }
+
+    function endMinigame() {
+        if (minigameState.gameOver) return;
+        minigameState.gameOver = true;
+        audio.play('hit');
+
+        // Calculate bones awarded
+        let bonesWon = Math.floor(minigameState.score * 1.5);
+        if (minigameState.score > minigameState.highScore) {
+            minigameState.highScore = minigameState.score;
+            state.highScores[minigameState.type] = minigameState.score;
+            bonesWon += 25; // Bonus for record
+            vfx.addText('¡NUEVO RECORD!', LOGICAL_WIDTH / 2 - 60, LOGICAL_HEIGHT / 2 - 40, '#ffcc00');
+            audio.play('fanfare');
+        }
+        minigameState.earnedBones = bonesWon;
+        state.bones += bonesWon;
+        // Minor happiness boost from playing
+        state.vitals.happiness = Math.min(100, state.vitals.happiness + 15);
+        state.vitals.energy = Math.max(0, state.vitals.energy - 10);
+        saveState();
+    }
+
+    // --- 8. MINIGAME LOGIC UPDATES ---
+    function updateMinigameDodge(dt) {
+        if (minigameState.gameOver) return;
+
+        minigameState.speed += 8 * dt; // progressively faster
+
+        // Spawn falling blocks
+        if (Math.random() < 0.05 + (minigameState.speed * 0.00015)) {
+            const isHeavy = Math.random() > 0.8;
+            minigameState.entities.push({
+                x: 10 + Math.random() * (LOGICAL_WIDTH - 60),
+                y: -50,
+                w: isHeavy ? 60 : 36,
+                h: isHeavy ? 60 : 36,
+                color: isHeavy ? '#ff0055' : '#00f0ff',
+                speedMultiplier: isHeavy ? 0.85 : 1.15,
+                scored: false,
+                type: isHeavy ? 'heavy' : 'normal'
+            });
+        }
+
+        const dogHitbox = {
+            x: minigameState.playerX - 22,
+            y: minigameState.playerY - 20,
+            w: 44,
+            h: 40
+        };
+
+        for (let i = minigameState.entities.length - 1; i >= 0; i--) {
+            const e = minigameState.entities[i];
+            e.y += minigameState.speed * e.speedMultiplier * dt;
+
+            // Near Miss mechanic
+            const dist = Math.hypot((e.x + e.w/2) - (dogHitbox.x + dogHitbox.w/2), (e.y + e.h/2) - (dogHitbox.y + dogHitbox.h/2));
+            if (dist < 55 && !e.nearMissed) {
+                e.nearMissed = true;
+                vfx.addText('+2 ROZANDO!', minigameState.playerX - 30, minigameState.playerY - 40, '#ffcc00');
+                minigameState.score += 2;
+                audio.play('near_miss');
+            }
+
+            // Collision check
+            if (e.x < dogHitbox.x + dogHitbox.w &&
+                e.x + e.w > dogHitbox.x &&
+                e.y < dogHitbox.y + dogHitbox.h &&
+                e.y + e.h > dogHitbox.y) {
+                minigameState.screenShake = 12;
+                vfx.emit(e.x + e.w/2, e.y + e.h/2, 14, 'spark');
+                endMinigame();
+                return;
+            }
+
+            // Successfully dodged
+            if (e.y > LOGICAL_HEIGHT) {
+                if (!e.scored) {
+                    minigameState.score += 1;
+                    e.scored = true;
+                }
+                minigameState.entities.splice(i, 1);
+            }
+        }
+    }
+
+    function updateMinigameCatch(dt) {
+        if (minigameState.gameOver) return;
+
+        minigameState.timer -= dt;
+        if (minigameState.timer <= 0) {
+            endMinigame();
+            return;
+        }
+
+        // Spawn treats and hazards
+        if (Math.random() < 0.05 + dt) {
+            const roll = Math.random();
+            let itemType = 'bone';
+            let color = '#ffffff';
+            let pts = 1;
+
+            if (roll < 0.5) {
+                itemType = 'bone'; color = '#ffffff'; pts = 1;
+            } else if (roll < 0.75) {
+                itemType = 'steak'; color = '#ff4d6d'; pts = 3;
+            } else if (roll < 0.88) {
+                itemType = 'gold_bone'; color = '#ffd700'; pts = 5;
+            } else {
+                itemType = 'anvil'; color = '#4a5568'; pts = -4; // Hazard
+            }
+
+            minigameState.entities.push({
+                x: 20 + Math.random() * (LOGICAL_WIDTH - 60),
+                y: -40,
+                w: 32,
+                h: 32,
+                type: itemType,
+                color,
+                pts,
+                speed: 180 + Math.random() * 80
+            });
+        }
+
+        const dogHitbox = {
+            x: minigameState.playerX - 25,
+            y: minigameState.playerY - 20,
+            w: 50,
+            h: 40
+        };
+
+        for (let i = minigameState.entities.length - 1; i >= 0; i--) {
+            const e = minigameState.entities[i];
+            e.y += e.speed * dt;
+
+            // Catch test
+            if (e.x < dogHitbox.x + dogHitbox.w &&
+                e.x + e.w > dogHitbox.x &&
+                e.y < dogHitbox.y + dogHitbox.h &&
+                e.y + e.h > dogHitbox.y) {
+
+                if (e.type === 'anvil') {
+                    audio.play('hit');
+                    minigameState.screenShake = 10;
+                    minigameState.score = Math.max(0, minigameState.score - 4);
+                    vfx.addText('-4 AUCH!', e.x, e.y, '#ff3366');
+                } else {
+                    audio.play('coin');
+                    minigameState.score += e.pts;
+                    vfx.emit(e.x + 16, e.y + 16, 8, 'gold');
+                    vfx.addText(`+${e.pts}`, e.x, e.y, e.color);
+                }
+                minigameState.entities.splice(i, 1);
+                continue;
+            }
+
+            if (e.y > LOGICAL_HEIGHT) {
+                minigameState.entities.splice(i, 1);
+            }
+        }
+    }
+
+    function updateMinigameJump(dt) {
+        if (minigameState.gameOver) return;
+
+        // Physics
+        minigameState.playerVy += 1400 * dt; // Gravity
+        minigameState.playerY += minigameState.playerVy * dt;
+
+        // Horizontal wrap
+        if (minigameState.playerX < 0) minigameState.playerX = LOGICAL_WIDTH;
+        if (minigameState.playerX > LOGICAL_WIDTH) minigameState.playerX = 0;
+
+        // Camera follow upward
+        if (minigameState.playerY < LOGICAL_HEIGHT * 0.45) {
+            const deltaY = (LOGICAL_HEIGHT * 0.45) - minigameState.playerY;
+            minigameState.playerY = LOGICAL_HEIGHT * 0.45;
+
+            // Shift all platforms down
+            for (const p of minigameState.entities) {
+                p.y += deltaY;
+            }
+            minigameState.score += Math.floor(deltaY / 4);
+        }
+
+        // Platform collisions (only when moving downwards)
+        if (minigameState.playerVy > 0) {
+            const feetY = minigameState.playerY + 20;
+            for (const p of minigameState.entities) {
+                if (feetY >= p.y && feetY <= p.y + p.h + 16 &&
+                    minigameState.playerX + 18 > p.x &&
+                    minigameState.playerX - 18 < p.x + p.w) {
+
+                    if (p.type === 'spring') {
+                        minigameState.playerVy = -850;
+                        audio.play('jump');
+                        vfx.emit(minigameState.playerX, feetY, 8, 'spark');
+                        vfx.addText('¡SUPER REBOTE!', minigameState.playerX - 40, feetY - 20, '#00f0ff');
+                    } else {
+                        minigameState.playerVy = -580;
+                        audio.play('jump');
+                        vfx.emit(minigameState.playerX, feetY, 4, 'star');
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Moving platforms update & cleanup
+        for (let i = minigameState.entities.length - 1; i >= 0; i--) {
+            const p = minigameState.entities[i];
+            if (p.vx) {
+                p.x += p.vx * dt;
+                if (p.x < 10 || p.x + p.w > LOGICAL_WIDTH - 10) p.vx *= -1;
+            }
+
+            if (p.y > LOGICAL_HEIGHT) {
+                minigameState.entities.splice(i, 1);
+                // Recycle / Spawn new platform high above
+                minigameState.entities.push({
+                    x: 20 + Math.random() * (LOGICAL_WIDTH - 120),
+                    y: -30,
+                    w: 80,
+                    h: 18,
+                    type: Math.random() > 0.25 ? 'normal' : 'spring',
+                    vx: Math.random() > 0.5 ? (Math.random() > 0.5 ? 50 : -50) : 0
+                });
+            }
+        }
+
+        // Death by falling off the bottom
+        if (minigameState.playerY > LOGICAL_HEIGHT + 40) {
+            endMinigame();
+        }
+    }
+
+    function updateMinigameLane(dt) {
+        if (minigameState.gameOver) return;
+
+        minigameState.speed += 12 * dt;
+        const laneXs = [LOGICAL_WIDTH * 0.22, LOGICAL_WIDTH * 0.5, LOGICAL_WIDTH * 0.78];
+        const targetX = laneXs[minigameState.laneIndex];
+
+        // Smooth lane interpolation
+        minigameState.playerX += (targetX - minigameState.playerX) * 14 * dt;
+        minigameState.score += Math.floor(10 * dt);
+
+        // Spawn lane obstacles & bones
+        if (Math.random() < 0.04 + dt) {
+            const lane = Math.floor(Math.random() * 3);
+            const isBone = Math.random() > 0.65;
+            minigameState.entities.push({
+                lane,
+                x: laneXs[lane] - 22,
+                y: -50,
+                w: 44,
+                h: 44,
+                isBone,
+                color: isBone ? '#ffd700' : '#ff0055'
+            });
+        }
+
+        for (let i = minigameState.entities.length - 1; i >= 0; i--) {
+            const e = minigameState.entities[i];
+            e.y += minigameState.speed * dt;
+
+            // Check collision with dog
+            if (Math.abs(e.y - minigameState.playerY) < 32 && e.lane === minigameState.laneIndex) {
+                if (e.isBone) {
+                    audio.play('coin');
+                    minigameState.score += 25;
+                    vfx.emit(e.x + 22, e.y + 22, 10, 'gold');
+                    vfx.addText('+25 HUESO', e.x, e.y - 10, '#ffd700');
+                    minigameState.entities.splice(i, 1);
+                } else {
+                    minigameState.screenShake = 14;
+                    vfx.emit(e.x + 22, e.y + 22, 16, 'spark');
+                    endMinigame();
+                    return;
+                }
+                continue;
+            }
+
+            if (e.y > LOGICAL_HEIGHT + 50) {
+                minigameState.entities.splice(i, 1);
+            }
+        }
+    }
+
+    // --- 9. RENDER ENGINE & UI DRAWING ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentScreen = SCREENS.DASHBOARD;
+    let uiHitboxes = [];
+    let wardrobeTab = 'hats'; // 'hats', 'glasses', 'neck', 'pets'
+
+    function registerHitbox(id, x, y, w, h, data = {}) {
+        uiHitboxes.push({ id, x, y, w, h, data });
+    }
+
+    function drawPixelButton(x, y, w, h, text, color = '#2c3e50', active = false) {
+        ctx.save();
+        // Drop shadow
+        ctx.fillStyle = '#0a0c16';
+        ctx.fillRect(x + 2, y + 4, w, h);
+
+        // Main body
+        ctx.fillStyle = active ? '#00f0ff' : color;
+        ctx.fillRect(x, y, w, h);
+
+        // Border
+        ctx.strokeStyle = active ? '#ffffff' : 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h);
+
+        // Top highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillRect(x, y, w, 3);
+
+        // Text
+        ctx.fillStyle = active ? '#000000' : '#ffffff';
+        ctx.font = 'bold 16px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, x + w / 2, y + h / 2);
+        ctx.restore();
+    }
+
+    function drawVitalsBar(x, y, w, h, label, value, maxVal, color, icon) {
+        ctx.save();
+        // Label & Icon
+        ctx.font = 'bold 13px "Courier New", monospace';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${icon} ${label}`, x, y - 4);
+
+        // Value text
+        ctx.textAlign = 'right';
+        ctx.fillStyle = color;
+        ctx.fillText(`${Math.round(value)}%`, x + w, y - 4);
+
+        // Bar container
+        ctx.fillStyle = '#101322';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#2d3748';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x, y, w, h);
+
+        // Fill bar with gradient-like blocks
+        const fillWidth = Math.max(0, Math.min(w, (value / maxVal) * w));
+        ctx.fillStyle = color;
+        ctx.fillRect(x + 1, y + 1, fillWidth - 2, h - 2);
+
+        // Segment markings
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        for (let i = 1; i < 5; i++) {
+            ctx.fillRect(x + (w * i) / 5, y + 1, 1, h - 2);
+        }
+        ctx.restore();
+    }
+
+    // --- SCREEN 1: DASHBOARD / PERMANENT PET STATUS ---
+    function drawDashboard(timeSec) {
+        const pet = DOG_BREEDS[state.activePetIndex];
+
+        // 1. Room Background
+        // Wallpaper gradient
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, LOGICAL_HEIGHT * 0.65);
+        bgGrad.addColorStop(0, '#1a1e36');
+        bgGrad.addColorStop(1, '#2c3358');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT * 0.65);
+
+        // Window in the room with sky & pixel stars
+        ctx.fillStyle = '#0d1326';
+        ctx.fillRect(LOGICAL_WIDTH - 120, 65, 85, 75);
+        ctx.strokeStyle = '#4a5568';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(LOGICAL_WIDTH - 120, 65, 85, 75);
+        // Window crossbars
+        ctx.fillRect(LOGICAL_WIDTH - 120, 65 + 37, 85, 2);
+        ctx.fillRect(LOGICAL_WIDTH - 120 + 42, 65, 2, 75);
+        // Moon in window
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(LOGICAL_WIDTH - 90, 95, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cozy wooden floor planks
+        const floorY = LOGICAL_HEIGHT * 0.58;
+        ctx.fillStyle = '#654321';
+        ctx.fillRect(0, floorY, LOGICAL_WIDTH, LOGICAL_HEIGHT - floorY);
+        ctx.fillStyle = '#543618';
+        for (let y = floorY; y < LOGICAL_HEIGHT; y += 22) {
+            ctx.fillRect(0, y, LOGICAL_WIDTH, 2);
+        }
+
+        // Cute pet rug
+        ctx.fillStyle = '#4c51bf';
+        ctx.beginPath();
+        ctx.ellipse(LOGICAL_WIDTH / 2, floorY + 45, 120, 35, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#667eea';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // 2. Top Header Bar: Bones, Pet Switcher, Audio
+        ctx.fillStyle = '#0f111e';
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, 52);
+        ctx.strokeStyle = '#232946';
+        ctx.strokeRect(0, 0, LOGICAL_WIDTH, 52);
+
+        // Bones / Coins
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 18px "Courier New", monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`🦴 ${state.bones}`, 16, 32);
+
+        // Sound Toggle Button
+        const soundText = audio.muted ? '🔇' : '🔊';
+        drawPixelButton(LOGICAL_WIDTH - 50, 10, 36, 32, soundText, '#1f2438');
+        registerHitbox('toggle_sound', LOGICAL_WIDTH - 50, 10, 36, 32);
+
+        // Pet Switch Buttons (Quick switch on top bar)
+        drawPixelButton(LOGICAL_WIDTH / 2 - 75, 10, 30, 32, '◀', '#1f2438');
+        registerHitbox('prev_pet', LOGICAL_WIDTH / 2 - 75, 10, 30, 32);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 15px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(pet.shortName, LOGICAL_WIDTH / 2, 31);
+
+        drawPixelButton(LOGICAL_WIDTH / 2 + 45, 10, 30, 32, '▶', '#1f2438');
+        registerHitbox('next_pet', LOGICAL_WIDTH / 2 + 45, 10, 30, 32);
+
+        // 3. Vitals HUD (Hambre, Felicidad, Energía, Estrés)
+        const vitalsX = 20;
+        const vitalsY = 70;
+        const vitalsW = 190;
+        drawVitalsBar(vitalsX, vitalsY, vitalsW, 10, 'Hambre', state.vitals.hunger, 100, '#e53e3e', '🥩');
+        drawVitalsBar(vitalsX, vitalsY + 28, vitalsW, 10, 'Felicidad', state.vitals.happiness, 100, '#ecc94b', '💖');
+        drawVitalsBar(vitalsX, vitalsY + 56, vitalsW, 10, 'Energía', state.vitals.energy, 100, '#38b2ac', '⚡');
+        drawVitalsBar(vitalsX, vitalsY + 84, vitalsW, 10, 'Estrés', 100 - state.vitals.stress, 100, '#9f7aea', '🧘');
+
+        // 4. Render Active Pet on Rug
+        let emotion = 'normal';
+        if (state.vitals.energy < 25) emotion = 'sleepy';
+        else if (state.vitals.happiness > 70) emotion = 'happy';
+
+        const dogSprite = getCachedDogSprite(
+            pet,
+            state.equipped.hat,
+            state.equipped.glasses,
+            state.equipped.neck,
+            timeSec,
+            emotion
+        );
+
+        const dogDrawX = LOGICAL_WIDTH / 2 - 60;
+        const dogDrawY = floorY - 35;
+        ctx.drawImage(dogSprite, dogDrawX, dogDrawY);
+
+        // Petting clickable zone on the dog
+        registerHitbox('pet_dog', dogDrawX, dogDrawY, 120, 100);
+
+        // Pet name badge under dog
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(LOGICAL_WIDTH / 2 - 80, floorY + 70, 160, 24);
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 13px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`★ ${pet.name} ★`, LOGICAL_WIDTH / 2, floorY + 86);
+
+        // 5. Interactive Action Dashboard Buttons
+        const btnY = LOGICAL_HEIGHT - 170;
+        const btnW = 180;
+        const btnH = 46;
+
+        // Feed button
+        drawPixelButton(20, btnY, btnW, btnH, '🥩 ALIMENTAR (5🦴)', '#c53030');
+        registerHitbox('action_feed', 20, btnY, btnW, btnH);
+
+        // Pet / Cuddle button
+        drawPixelButton(LOGICAL_WIDTH - 200, btnY, btnW, btnH, '💖 ACARICIAR', '#d53f8c');
+        registerHitbox('action_pet', LOGICAL_WIDTH - 200, btnY, btnW, btnH);
+
+        // Rest / Nap button
+        drawPixelButton(20, btnY + 56, btnW, btnH, '💤 DESCANSAR', '#3182ce');
+        registerHitbox('action_rest', 20, btnY + 56, btnW, btnH);
+
+        // Wardrobe / Store
+        drawPixelButton(LOGICAL_WIDTH - 200, btnY + 56, btnW, btnH, '🎩 VESTIDOR', '#805ad5');
+        registerHitbox('action_wardrobe', LOGICAL_WIDTH - 200, btnY + 56, btnW, btnH);
+
+        // BIG ARCADE CENTER BUTTON (Bottom bar)
+        drawPixelButton(20, LOGICAL_HEIGHT - 56, LOGICAL_WIDTH - 40, 46, '🎮 CENTRO DE MINIJUEGOS ARCADE', '#05ffa1', true);
+        registerHitbox('goto_minigames', 20, LOGICAL_HEIGHT - 56, LOGICAL_WIDTH - 40, 46);
+    }
+
+    // --- SCREEN 2: WARDROBE & PET SHOP (TIENDA Y VESTIDOR) ---
+    function drawWardrobe(timeSec) {
+        ctx.fillStyle = '#111422';
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        // Header
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 22px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('VESTIDOR & TIENDA', LOGICAL_WIDTH / 2, 40);
+
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 16px "Courier New", monospace';
+        ctx.fillText(`🦴 Huesos: ${state.bones}`, LOGICAL_WIDTH / 2, 65);
+
+        // Live Preview of Current Dog Wearing Equipped items
+        const activePet = DOG_BREEDS[state.activePetIndex];
+        const previewSprite = getCachedDogSprite(
+            activePet,
+            state.equipped.hat,
+            state.equipped.glasses,
+            state.equipped.neck,
+            timeSec,
+            'happy'
+        );
+
+        ctx.fillStyle = '#1a1e36';
+        ctx.fillRect(LOGICAL_WIDTH / 2 - 80, 80, 160, 110);
+        ctx.strokeStyle = '#2d3748';
+        ctx.strokeRect(LOGICAL_WIDTH / 2 - 80, 80, 160, 110);
+        ctx.drawImage(previewSprite, LOGICAL_WIDTH / 2 - 60, 80);
+
+        // Category Tabs
+        const tabY = 205;
+        const tabW = (LOGICAL_WIDTH - 40) / 4;
+        const tabs = [
+            { id: 'hats', label: '🧢 Gorros' },
+            { id: 'glasses', label: '👓 Gafas' },
+            { id: 'neck', label: '🧣 Cuello' },
+            { id: 'pets', label: '🐕 Perros' }
+        ];
+
+        tabs.forEach((t, i) => {
+            const tx = 20 + i * tabW;
+            const isActive = wardrobeTab === t.id;
+            drawPixelButton(tx, tabY, tabW - 4, 34, t.label, isActive ? '#4a5568' : '#1e2438', isActive);
+            registerHitbox(`tab_${t.id}`, tx, tabY, tabW - 4, 34);
+        });
+
+        // Items List
+        const listY = 250;
+        let items = [];
+
+        if (wardrobeTab === 'hats') items = ACCESSORIES.hats;
+        else if (wardrobeTab === 'glasses') items = ACCESSORIES.glasses;
+        else if (wardrobeTab === 'neck') items = ACCESSORIES.neck;
+        else if (wardrobeTab === 'pets') items = DOG_BREEDS;
+
+        items.forEach((item, idx) => {
+            const iy = listY + idx * 56;
+            if (iy + 50 > LOGICAL_HEIGHT - 70) return; // scroll safety limit
+
+            let isEquipped = false;
+            let isUnlocked = item.unlocked;
+
+            if (wardrobeTab === 'pets') {
+                isEquipped = state.activePetIndex === idx;
+            } else {
+                const categoryKey = wardrobeTab === 'hats' ? 'hat' : wardrobeTab === 'glasses' ? 'glasses' : 'neck';
+                isEquipped = state.equipped[categoryKey] === item.id;
+            }
+
+            // Item card background
+            ctx.fillStyle = isEquipped ? '#1b4d3e' : '#171a2e';
+            ctx.fillRect(20, iy, LOGICAL_WIDTH - 40, 50);
+            ctx.strokeStyle = isEquipped ? '#05ffa1' : '#2d3748';
+            ctx.strokeRect(20, iy, LOGICAL_WIDTH - 40, 50);
+
+            // Item Name
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 15px "Courier New", monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(item.name, 35, iy + 30);
+
+            // Action Button (Equip, Equipped, or Buy)
+            const btnActionW = 110;
+            const btnActionX = LOGICAL_WIDTH - 140;
+
+            if (isEquipped) {
+                drawPixelButton(btnActionX, iy + 8, btnActionW, 34, 'EQUIPADO', '#05ffa1', true);
+            } else if (isUnlocked) {
+                drawPixelButton(btnActionX, iy + 8, btnActionW, 34, 'EQUIPAR', '#3182ce');
+                registerHitbox(`equip_${wardrobeTab}_${item.id || idx}`, btnActionX, iy + 8, btnActionW, 34, { item, idx });
+            } else {
+                drawPixelButton(btnActionX, iy + 8, btnActionW, 34, `🦴 ${item.price}`, '#d69e2e');
+                registerHitbox(`buy_${wardrobeTab}_${item.id || idx}`, btnActionX, iy + 8, btnActionW, 34, { item, idx });
+            }
+        });
+
+        // Back to Dashboard
+        drawPixelButton(20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46, '◀ VOLVER AL HOGAR', '#e53e3e');
+        registerHitbox('goto_dashboard', 20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46);
+    }
+
+    // --- SCREEN 3: ARCADE MINIGAME SELECTOR ---
+    function drawMinigamesMenu() {
+        ctx.fillStyle = '#0d0f18';
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        // Header Title with arcade glow
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 26px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('ARCADE DOGS', LOGICAL_WIDTH / 2, 50);
+
+        ctx.fillStyle = '#a0aec0';
+        ctx.font = 'bold 14px "Courier New", monospace';
+        ctx.fillText('Esquiva bloques, gana huesos y diviértete', LOGICAL_WIDTH / 2, 75);
+
+        // 4 Minigames Cards
+        const games = [
+            {
+                type: SCREENS.MG_DODGE,
+                title: '1. LLUVIA DE BLOQUES',
+                desc: 'Esquiva bloques a toda velocidad. ¡Near Miss!',
+                color: '#e53e3e',
+                highScore: state.highScores.MG_DODGE || 0
+            },
+            {
+                type: SCREENS.MG_CATCH,
+                title: '2. ATRAPA PREMIOS',
+                desc: 'Atrapa filetes y huesos. ¡Cuidado con yunques!',
+                color: '#805ad5',
+                highScore: state.highScores.MG_CATCH || 0
+            },
+            {
+                type: SCREENS.MG_JUMP,
+                title: '3. PAWS PLATFORMS',
+                desc: 'Salta plataformas y resortes sin caerte.',
+                color: '#d69e2e',
+                highScore: state.highScores.MG_JUMP || 0
+            },
+            {
+                type: SCREENS.MG_LANE,
+                title: '4. SPEED LANE DASH',
+                desc: '3 carriles frenéticos de reflejos puros.',
+                color: '#05ffa1',
+                highScore: state.highScores.MG_LANE || 0
+            }
+        ];
+
+        games.forEach((g, idx) => {
+            const gy = 110 + idx * 125;
+
+            // Card background
+            ctx.fillStyle = '#171a2e';
+            ctx.fillRect(20, gy, LOGICAL_WIDTH - 40, 110);
+            ctx.strokeStyle = g.color;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(20, gy, LOGICAL_WIDTH - 40, 110);
+
+            // Title
+            ctx.fillStyle = g.color;
+            ctx.font = 'bold 17px "Courier New", monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(g.title, 35, gy + 30);
+
+            // Desc
+            ctx.fillStyle = '#cbd5e0';
+            ctx.font = '12px "Courier New", monospace';
+            ctx.fillText(g.desc, 35, gy + 52);
+
+            // Highscore
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 13px "Courier New", monospace';
+            ctx.fillText(`🏆 Record: ${g.highScore}`, 35, gy + 85);
+
+            // Play button
+            drawPixelButton(LOGICAL_WIDTH - 130, gy + 60, 95, 36, 'JUGAR ▶', g.color);
+            registerHitbox(`start_${g.type}`, 20, gy, LOGICAL_WIDTH - 40, 110, { type: g.type });
+        });
+
+        // Back to Dashboard
+        drawPixelButton(20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46, '◀ VOLVER AL HOGAR', '#e53e3e');
+        registerHitbox('goto_dashboard', 20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46);
+    }
+
+    // --- ACTIVE MINIGAME RENDERING ---
+    function drawActiveMinigame(timeSec) {
+        // Dynamic Screen Shake
+        let shakeX = 0, shakeY = 0;
+        if (minigameState.screenShake > 0) {
+            shakeX = (Math.random() - 0.5) * minigameState.screenShake;
+            shakeY = (Math.random() - 0.5) * minigameState.screenShake;
+            minigameState.screenShake = Math.max(0, minigameState.screenShake - 30 * (1/60));
+        }
+
+        ctx.save();
+        ctx.translate(shakeX, shakeY);
+
+        // Background
+        ctx.fillStyle = '#0d0f18';
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        // Minigame specific backgrounds
+        if (minigameState.type === SCREENS.MG_LANE) {
+            // Draw 3 lanes
+            const laneXs = [LOGICAL_WIDTH * 0.22, LOGICAL_WIDTH * 0.5, LOGICAL_WIDTH * 0.78];
+            ctx.strokeStyle = '#2d3748';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(LOGICAL_WIDTH * 0.36, 0); ctx.lineTo(LOGICAL_WIDTH * 0.36, LOGICAL_HEIGHT);
+            ctx.moveTo(LOGICAL_WIDTH * 0.64, 0); ctx.lineTo(LOGICAL_WIDTH * 0.64, LOGICAL_HEIGHT);
+            ctx.stroke();
+
+            // Lane markers
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            for (let y = (timeSec * 300) % 60; y < LOGICAL_HEIGHT; y += 60) {
+                ctx.fillRect(LOGICAL_WIDTH * 0.36 - 2, y, 4, 30);
+                ctx.fillRect(LOGICAL_WIDTH * 0.64 - 2, y, 4, 30);
+            }
+        }
+
+        // Render Entities
+        for (const e of minigameState.entities) {
+            if (minigameState.type === SCREENS.MG_DODGE) {
+                // Neon Falling Hazard Block
+                ctx.fillStyle = e.color;
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(e.x, e.y, e.w, e.h);
+                // Hazard symbol
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('!', e.x + e.w/2, e.y + e.h/2 + 6);
+            } else if (minigameState.type === SCREENS.MG_CATCH) {
+                // Items
+                ctx.fillStyle = e.color;
+                if (e.type === 'anvil') {
+                    ctx.fillRect(e.x, e.y + 10, e.w, e.h - 10);
+                    ctx.fillRect(e.x + 6, e.y, e.w - 12, 10);
+                } else if (e.type === 'steak') {
+                    ctx.beginPath();
+                    ctx.ellipse(e.x + 16, e.y + 16, 14, 10, 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(e.x + 20, e.y + 14, 4, 4); // bone tip
+                } else {
+                    // Bone
+                    ctx.fillRect(e.x + 4, e.y + 12, e.w - 8, 8);
+                    ctx.beginPath();
+                    ctx.arc(e.x + 4, e.y + 10, 5, 0, Math.PI * 2);
+                    ctx.arc(e.x + 4, e.y + 22, 5, 0, Math.PI * 2);
+                    ctx.arc(e.x + e.w - 4, e.y + 10, 5, 0, Math.PI * 2);
+                    ctx.arc(e.x + e.w - 4, e.y + 22, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (minigameState.type === SCREENS.MG_JUMP) {
+                // Platform
+                ctx.fillStyle = e.type === 'spring' ? '#00f0ff' : '#48bb78';
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(e.x, e.y, e.w, e.h);
+                if (e.type === 'spring') {
+                    ctx.fillStyle = '#ffd700';
+                    ctx.fillRect(e.x + e.w/2 - 6, e.y - 4, 12, 4);
+                }
+            } else if (minigameState.type === SCREENS.MG_LANE) {
+                // Lane items
+                ctx.fillStyle = e.color;
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(e.x, e.y, e.w, e.h);
+            }
+        }
+
+        // Draw Player Dog
+        const activePet = DOG_BREEDS[state.activePetIndex];
+        const playerSprite = getCachedDogSprite(
+            activePet,
+            state.equipped.hat,
+            state.equipped.glasses,
+            state.equipped.neck,
+            timeSec,
+            minigameState.gameOver ? 'sleepy' : 'happy'
+        );
+        ctx.drawImage(playerSprite, minigameState.playerX - 60, minigameState.playerY - 45);
+
+        // Touch Control Buttons for Mobile / Web Touch
+        if (minigameState.type === SCREENS.MG_LANE) {
+            // Left / Right Lane Tap Zones
+            drawPixelButton(20, LOGICAL_HEIGHT - 80, 110, 50, '◀ IZQ', '#2d3748');
+            registerHitbox('lane_left', 20, LOGICAL_HEIGHT - 80, 110, 50);
+
+            drawPixelButton(LOGICAL_WIDTH - 130, LOGICAL_HEIGHT - 80, 110, 50, 'DER ▶', '#2d3748');
+            registerHitbox('lane_right', LOGICAL_WIDTH - 130, LOGICAL_HEIGHT - 80, 110, 50);
+        } else if (minigameState.type !== SCREENS.MG_JUMP) {
+            // Virtual left / right steer buttons
+            drawPixelButton(20, LOGICAL_HEIGHT - 80, 100, 50, '◀◀', '#2d3748');
+            registerHitbox('steer_left', 20, LOGICAL_HEIGHT - 80, 100, 50);
+
+            drawPixelButton(LOGICAL_WIDTH - 120, LOGICAL_HEIGHT - 80, 100, 50, '▶▶', '#2d3748');
+            registerHitbox('steer_right', LOGICAL_WIDTH - 120, LOGICAL_HEIGHT - 80, 100, 50);
+        }
+
+        // Top HUD: Score & Timer
+        ctx.fillStyle = 'rgba(15, 17, 30, 0.85)';
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, 48);
+
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 20px "Courier New", monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Puntos: ${minigameState.score}`, 16, 32);
+
+        if (minigameState.type === SCREENS.MG_CATCH) {
+            ctx.fillStyle = '#ffd700';
+            ctx.textAlign = 'right';
+            ctx.fillText(`⏱ ${Math.ceil(minigameState.timer)}s`, LOGICAL_WIDTH - 16, 32);
+        } else {
+            ctx.fillStyle = '#a0aec0';
+            ctx.textAlign = 'right';
+            ctx.font = 'bold 15px "Courier New", monospace';
+            ctx.fillText(`Record: ${minigameState.highScore}`, LOGICAL_WIDTH - 16, 32);
+        }
+
+        // --- GAME OVER MODAL DIALOG ---
+        if (minigameState.gameOver) {
+            ctx.fillStyle = 'rgba(10, 12, 22, 0.85)';
+            ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+            const modalY = LOGICAL_HEIGHT / 2 - 140;
+            ctx.fillStyle = '#171a2e';
+            ctx.fillRect(30, modalY, LOGICAL_WIDTH - 60, 280);
+            ctx.strokeStyle = '#e53e3e';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(30, modalY, LOGICAL_WIDTH - 60, 280);
+
+            ctx.fillStyle = '#e53e3e';
+            ctx.font = 'bold 28px "Courier New", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('¡FIN DEL JUEGO!', LOGICAL_WIDTH / 2, modalY + 45);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px "Courier New", monospace';
+            ctx.fillText(`Puntaje Final: ${minigameState.score}`, LOGICAL_WIDTH / 2, modalY + 90);
+
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 20px "Courier New", monospace';
+            ctx.fillText(`+${minigameState.earnedBones} HUESOS GANADOS! 🦴`, LOGICAL_WIDTH / 2, modalY + 125);
+
+            // Replay Button
+            drawPixelButton(50, modalY + 160, LOGICAL_WIDTH - 100, 44, 'REINTENTAR ↺', '#05ffa1', true);
+            registerHitbox('minigame_retry', 50, modalY + 160, LOGICAL_WIDTH - 100, 44);
+
+            // Back to Pet Dashboard
+            drawPixelButton(50, modalY + 215, LOGICAL_WIDTH - 100, 44, 'SALIR AL HOGAR 🏠', '#3182ce');
+            registerHitbox('minigame_exit', 50, modalY + 215, LOGICAL_WIDTH - 100, 44);
+        }
+
+        ctx.restore();
+    }
+
+    // --- 10. INPUT, TOUCH & EVENT HANDLING ---
+    function getCanvasCoordinates(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = LOGICAL_WIDTH / rect.width;
+        const scaleY = LOGICAL_HEIGHT / rect.height;
+
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        }
+
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY,
+            screenX: clientX,
+            screenY: clientY
+        };
+    }
+
+    const touchFeedback = document.getElementById('touchFeedback');
+    function showTouchGlow(clientX, clientY) {
+        if (!touchFeedback) return;
+        touchFeedback.style.left = `${clientX}px`;
+        touchFeedback.style.top = `${clientY}px`;
+        touchFeedback.classList.remove('active');
+        void touchFeedback.offsetWidth; // retrigger
+        touchFeedback.classList.add('active');
+    }
+
+    function handleInteraction(pos) {
+        audio.init();
+
+        // 1. Check UI Hitboxes
+        for (const hit of uiHitboxes) {
+            if (pos.x >= hit.x && pos.x <= hit.x + hit.w &&
+                pos.y >= hit.y && pos.y <= hit.y + hit.h) {
+
+                audio.play('click');
+
+                // Route hitbox action
+                if (hit.id === 'toggle_sound') {
+                    audio.muted = !audio.muted;
+                    state.soundEnabled = !audio.muted;
+                    saveState();
+                    return;
+                }
+                if (hit.id === 'prev_pet') {
+                    state.activePetIndex = (state.activePetIndex - 1 + DOG_BREEDS.length) % DOG_BREEDS.length;
+                    saveState();
+                    return;
+                }
+                if (hit.id === 'next_pet') {
+                    state.activePetIndex = (state.activePetIndex + 1) % DOG_BREEDS.length;
+                    saveState();
+                    return;
+                }
+                if (hit.id === 'action_feed') {
+                    if (state.bones >= 5) {
+                        state.bones -= 5;
+                        state.vitals.hunger = Math.min(100, state.vitals.hunger + 25);
+                        state.vitals.happiness = Math.min(100, state.vitals.happiness + 5);
+                        audio.play('eat');
+                        vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.55, 12, 'spark');
+                        vfx.addText('+25 HAMBRE', LOGICAL_WIDTH / 2 - 40, LOGICAL_HEIGHT * 0.5, '#48bb78');
+                        saveState();
+                    } else {
+                        vfx.addText('¡NECESITAS 5 HUESOS!', LOGICAL_WIDTH / 2 - 80, LOGICAL_HEIGHT * 0.5, '#e53e3e');
+                    }
+                    return;
+                }
+                if (hit.id === 'action_pet' || hit.id === 'pet_dog') {
+                    state.vitals.happiness = Math.min(100, state.vitals.happiness + 15);
+                    state.vitals.stress = Math.max(0, state.vitals.stress - 15);
+                    audio.play('pet');
+                    vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.55, 10, 'heart');
+                    vfx.addText('¡GUAU! 💖', LOGICAL_WIDTH / 2 - 30, LOGICAL_HEIGHT * 0.5, '#ff3366');
+                    saveState();
+                    return;
+                }
+                if (hit.id === 'action_rest') {
+                    state.vitals.energy = Math.min(100, state.vitals.energy + 30);
+                    state.vitals.stress = Math.max(0, state.vitals.stress - 20);
+                    audio.play('pet');
+                    vfx.addText('ZZZ... DORMIDITO', LOGICAL_WIDTH / 2 - 60, LOGICAL_HEIGHT * 0.5, '#00f0ff');
+                    saveState();
+                    return;
+                }
+                if (hit.id === 'action_wardrobe') {
+                    currentScreen = SCREENS.WARDROBE;
+                    return;
+                }
+                if (hit.id === 'goto_minigames') {
+                    currentScreen = SCREENS.MINIGAMES;
+                    return;
+                }
+                if (hit.id === 'goto_dashboard') {
+                    currentScreen = SCREENS.DASHBOARD;
+                    return;
+                }
+                if (hit.id.startsWith('tab_')) {
+                    wardrobeTab = hit.id.replace('tab_', '');
+                    return;
+                }
+                if (hit.id.startsWith('equip_')) {
+                    const cat = hit.id.split('_')[1];
+                    if (cat === 'pets') {
+                        state.activePetIndex = hit.data.idx;
+                    } else {
+                        const catKey = cat === 'hats' ? 'hat' : cat === 'glasses' ? 'glasses' : 'neck';
+                        state.equipped[catKey] = hit.data.item.id;
+                    }
+                    audio.play('coin');
+                    saveState();
+                    return;
+                }
+                if (hit.id.startsWith('buy_')) {
+                    const item = hit.data.item;
+                    const cat = hit.id.split('_')[1];
+                    if (state.bones >= item.price) {
+                        state.bones -= item.price;
+                        item.unlocked = true;
+                        if (cat === 'pets') {
+                            state.unlockedPets.push(item.id);
+                            state.activePetIndex = hit.data.idx;
+                        } else if (cat === 'hats') {
+                            state.unlockedHats.push(item.id);
+                            state.equipped.hat = item.id;
+                        } else if (cat === 'glasses') {
+                            state.unlockedGlasses.push(item.id);
+                            state.equipped.glasses = item.id;
+                        } else if (cat === 'neck') {
+                            state.unlockedNeck.push(item.id);
+                            state.equipped.neck = item.id;
+                        }
+                        audio.play('fanfare');
+                        vfx.emit(pos.x, pos.y, 16, 'gold');
+                        saveState();
+                    } else {
+                        vfx.addText('¡HUESOS INSUFICIENTES!', pos.x - 70, pos.y - 20, '#e53e3e');
+                    }
+                    return;
+                }
+                if (hit.id.startsWith('start_')) {
+                    startMinigame(hit.data.type);
+                    return;
+                }
+                if (hit.id === 'minigame_retry') {
+                    startMinigame(minigameState.type);
+                    return;
+                }
+                if (hit.id === 'minigame_exit') {
+                    currentScreen = SCREENS.DASHBOARD;
+                    return;
+                }
+                if (hit.id === 'steer_left') {
+                    minigameState.playerX = Math.max(30, minigameState.playerX - 65);
+                    return;
+                }
+                if (hit.id === 'steer_right') {
+                    minigameState.playerX = Math.min(LOGICAL_WIDTH - 30, minigameState.playerX + 65);
+                    return;
+                }
+                if (hit.id === 'lane_left') {
+                    minigameState.laneIndex = Math.max(0, minigameState.laneIndex - 1);
+                    return;
+                }
+                if (hit.id === 'lane_right') {
+                    minigameState.laneIndex = Math.min(2, minigameState.laneIndex + 1);
+                    return;
+                }
+            }
+        }
+
+        // Direct minigame canvas input (Tap left/right side of screen)
+        if (minigameState.active && !minigameState.gameOver) {
+            if (minigameState.type === SCREENS.MG_LANE) {
+                if (pos.x < LOGICAL_WIDTH / 2) {
+                    minigameState.laneIndex = Math.max(0, minigameState.laneIndex - 1);
+                } else {
+                    minigameState.laneIndex = Math.min(2, minigameState.laneIndex + 1);
+                }
+            } else if (minigameState.type === SCREENS.MG_JUMP) {
+                // Steer towards tap location
+                minigameState.playerX = pos.x;
+            } else {
+                // Dodge or catch
+                if (pos.x < minigameState.playerX) {
+                    minigameState.playerX = Math.max(30, minigameState.playerX - 55);
+                } else {
+                    minigameState.playerX = Math.min(LOGICAL_WIDTH - 30, minigameState.playerX + 55);
+                }
+            }
+        }
+    }
+
+    // Touch & Mouse Event Listeners
+    canvas.addEventListener('pointerdown', (e) => {
+        const coords = getCanvasCoordinates(e);
+        showTouchGlow(coords.screenX, coords.screenY);
+        handleInteraction(coords);
+    }, { passive: false });
+
+    // Keyboard support for desktop / dev testing
+    window.addEventListener('keydown', (e) => {
+        if (!minigameState.active || minigameState.gameOver) return;
+
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            if (minigameState.type === SCREENS.MG_LANE) {
+                minigameState.laneIndex = Math.max(0, minigameState.laneIndex - 1);
+            } else {
+                minigameState.playerX = Math.max(30, minigameState.playerX - 45);
+            }
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            if (minigameState.type === SCREENS.MG_LANE) {
+                minigameState.laneIndex = Math.min(2, minigameState.laneIndex + 1);
+            } else {
+                minigameState.playerX = Math.min(LOGICAL_WIDTH - 30, minigameState.playerX + 45);
+            }
+        } else if (e.key === 'Escape') {
+            currentScreen = SCREENS.DASHBOARD;
+        }
+    });
+
+    // --- 11. ENGINE LIFECYCLE & BATTERY CONSERVATION ---
+    let isAppVisible = true;
+    let lastTimestamp = performance.now();
+
+    document.addEventListener('visibilitychange', () => {
+        isAppVisible = (document.visibilityState === 'visible');
+        if (isAppVisible) {
+            lastTimestamp = performance.now();
+        }
+    });
+    window.addEventListener('blur', () => { isAppVisible = false; });
+    window.addEventListener('focus', () => {
+        isAppVisible = true;
+        lastTimestamp = performance.now();
+    });
+
+    // Window Resize Handler with Aspect-Ratio lock
+    function handleResize() {
+        const container = document.getElementById('game-wrapper');
+        const availW = window.innerWidth;
+        const availH = window.innerHeight;
+
+        // Maintain mobile aspect ratio (420:740)
+        const scale = Math.min(availW / LOGICAL_WIDTH, availH / LOGICAL_HEIGHT);
+        canvas.width = LOGICAL_WIDTH;
+        canvas.height = LOGICAL_HEIGHT;
+        canvas.style.width = `${Math.floor(LOGICAL_WIDTH * scale)}px`;
+        canvas.style.height = `${Math.floor(LOGICAL_HEIGHT * scale)}px`;
+    }
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    // Natural Vitals Decay & Recovery loop
+    function updateVitals(dt) {
+        if (currentScreen === SCREENS.DASHBOARD) {
+            // Gradual realistic decay
+            state.vitals.hunger = Math.max(0, state.vitals.hunger - 0.4 * dt);
+            state.vitals.happiness = Math.max(0, state.vitals.happiness - 0.3 * dt);
+            state.vitals.energy = Math.max(0, state.vitals.energy - 0.2 * dt);
+            state.vitals.stress = Math.min(100, state.vitals.stress + 0.2 * dt);
+        }
+    }
+
+    // --- 12. MASTER GAME LOOP (60 FPS DELTA TIME) ---
+    function mainGameLoop(timestamp) {
+        if (!isAppVisible) {
+            // Sleep mode when tab is inactive to preserve battery & CPU
+            setTimeout(() => requestAnimationFrame(mainGameLoop), 200);
+            return;
+        }
+
+        // Precise Delta Time capped to 0.1s
+        const dt = Math.min(0.1, (timestamp - lastTimestamp) / 1000);
+        lastTimestamp = timestamp;
+        const timeSec = timestamp / 1000;
+
+        // Clear hitboxes for new frame
+        uiHitboxes = [];
+
+        // Update systems
+        updateVitals(dt);
+        vfx.update(dt);
+
+        if (currentScreen === SCREENS.MG_DODGE) updateMinigameDodge(dt);
+        else if (currentScreen === SCREENS.MG_CATCH) updateMinigameCatch(dt);
+        else if (currentScreen === SCREENS.MG_JUMP) updateMinigameJump(dt);
+        else if (currentScreen === SCREENS.MG_LANE) updateMinigameLane(dt);
+
+        // Render current screen
+        ctx.clearRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        switch (currentScreen) {
+            case SCREENS.DASHBOARD:
+                drawDashboard(timeSec);
+                break;
+            case SCREENS.WARDROBE:
+                drawWardrobe(timeSec);
+                break;
+            case SCREENS.MINIGAMES:
+                drawMinigamesMenu();
+                break;
+            case SCREENS.MG_DODGE:
+            case SCREENS.MG_CATCH:
+            case SCREENS.MG_JUMP:
+            case SCREENS.MG_LANE:
+                drawActiveMinigame(timeSec);
+                break;
+        }
+
+        // Draw particle overlays
+        vfx.draw(ctx);
+
+        requestAnimationFrame(mainGameLoop);
+    }
+
+    // Start Engine
+    requestAnimationFrame(mainGameLoop);
+    </script>
+</body>
+</html>

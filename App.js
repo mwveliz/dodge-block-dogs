@@ -4,6 +4,8 @@ import { WebView } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import { StatusBar } from 'expo-status-bar';
 
+import * as Haptics from 'expo-haptics';
+
 export default function App() {
   const [htmlUri, setHtmlUri] = useState(null);
 
@@ -15,6 +17,25 @@ export default function App() {
     }
     loadHtml();
   }, []);
+
+  const handleMessage = (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'HAPTIC') {
+        if (data.style === 'heavy') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        } else if (data.style === 'medium') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        } else if (data.style === 'light') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } else if (data.style === 'success') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      }
+    } catch {
+      // Non-JSON message ignore
+    }
+  };
 
   if (!htmlUri) {
     // Show empty view with background color while loading
@@ -31,6 +52,15 @@ export default function App() {
         bounces={false}
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        allowFileAccess={true}
+        allowFileAccessFromFileURLs={true}
+        allowUniversalAccessFromFileURLs={true}
+        originWhitelist={['*']}
+        mixedContentMode="always"
+        mediaPlaybackRequiresUserAction={false}
+        onMessage={handleMessage}
       />
     </View>
   );
