@@ -19,7 +19,7 @@ function triggerHaptic(style = 'light') {
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
         try {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'HAPTIC', style }));
-        } catch (_e) {}
+        } catch (_e) { }
     } else if (navigator.vibrate) {
         if (style === 'heavy') navigator.vibrate(40);
         else if (style === 'medium') navigator.vibrate(25);
@@ -1240,19 +1240,19 @@ const DOG_BREEDS = [
     },
     {
         id: 'jackrussell',
-        name: 'LEIA (Jack Russell)',
-        shortName: 'LEIA',
+        name: 'Leia (Jack Russell)',
+        shortName: 'Leia',
         names: {
-            es: 'LEIA (Jack Russell)',
-            en: 'LEIA (Jack Russell)',
+            es: 'Leia (Jack Russell)',
+            en: 'Leia (Jack Russell)',
             ja: 'レイア (ジャックラッセル)',
-            pt: 'LEIA (Jack Russell)'
+            pt: 'Leia (Jack Russell)'
         },
         shortNames: {
-            es: 'LEIA',
-            en: 'LEIA',
+            es: 'Leia',
+            en: 'Leia',
             ja: 'レイア',
-            pt: 'LEIA'
+            pt: 'Leia'
         },
         desc: 'Ágil, hiperactivo y lleno de energía.',
         descs: {
@@ -1861,8 +1861,8 @@ const STORAGE_KEY = 'DODGE_BLOCK_DOGS_DELUXE_V4';
 
 const defaultState = {
     lang: (typeof navigator !== 'undefined' && navigator.language && navigator.language.startsWith('ja')) ? 'ja' :
-          (typeof navigator !== 'undefined' && navigator.language && navigator.language.startsWith('en')) ? 'en' :
-          (typeof navigator !== 'undefined' && navigator.language && navigator.language.startsWith('pt')) ? 'pt' : 'es',
+        (typeof navigator !== 'undefined' && navigator.language && navigator.language.startsWith('en')) ? 'en' :
+            (typeof navigator !== 'undefined' && navigator.language && navigator.language.startsWith('pt')) ? 'pt' : 'es',
     bones: 160,
     activePetIndex: 0,
     unlockedPets: ['dachshund'],
@@ -1949,7 +1949,7 @@ function saveState() {
         if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SAVE_STATE', state }));
         }
-    } catch (_e) {}
+    } catch (_e) { }
 }
 
 function syncUnlocks() {
@@ -2102,7 +2102,7 @@ class ProceduralDogBuilder {
         const snoutW = 0.46;
         const snoutGeo = new THREE.BoxGeometry(snoutLen, snoutH, snoutW);
         const snoutMat = breed.maskColor ? this.getMaterial(breed.maskColor, 0.4, 0.05) :
-                         breed.bellyColor ? bellyMat : bodyMat;
+            breed.bellyColor ? bellyMat : bodyMat;
         const snoutMesh = new THREE.Mesh(snoutGeo, snoutMat);
         snoutMesh.position.set(headSize * 0.45 + snoutLen * 0.45, -0.15, 0);
         headGroup.add(snoutMesh);
@@ -2859,9 +2859,9 @@ class ParticleSystem {
                 vy: Math.sin(angle) * speed - (type === 'heart' ? 60 : 20),
                 size: 4 + Math.random() * 6,
                 color: type === 'heart' ? '#ff2a85' :
-                       type === 'gold' ? '#ffcc00' :
-                       type === 'spark' ? '#00f0ff' :
-                       type === 'confetti' ? ['#00f0ff', '#ff2a85', '#ffcc00', '#05ffa1'][Math.floor(Math.random() * 4)] : '#ffffff',
+                    type === 'gold' ? '#ffcc00' :
+                        type === 'spark' ? '#00f0ff' :
+                            type === 'confetti' ? ['#00f0ff', '#ff2a85', '#ffcc00', '#05ffa1'][Math.floor(Math.random() * 4)] : '#ffffff',
                 life: 1.0,
                 decay: 1.0 + Math.random() * 1.4,
                 type,
@@ -4857,7 +4857,7 @@ function drawActiveMinigameHUD(timeSec) {
     if (minigameState.screenShake > 0) {
         shakeX = (Math.random() - 0.5) * minigameState.screenShake;
         shakeY = (Math.random() - 0.5) * minigameState.screenShake;
-        minigameState.screenShake = Math.max(0, minigameState.screenShake - 28 * (1/60));
+        minigameState.screenShake = Math.max(0, minigameState.screenShake - 28 * (1 / 60));
     }
 
     uictx.save();
@@ -5195,7 +5195,7 @@ function drawActiveMinigameHUD(timeSec) {
         const worldY = 0.5;
         const worldZ = ((minigameState.playerY / LOGICAL_HEIGHT) - 0.5) * 10;
         stage.currentDog.position.set(worldX, worldY, worldZ);
-        dogBuilder.updateDogAnimation(stage.currentDog, 1/60, timeSec, minigameState.speed || 1.5, true, minigameState.gameOver ? 'sleepy' : 'happy');
+        dogBuilder.updateDogAnimation(stage.currentDog, 1 / 60, timeSec, minigameState.speed || 1.5, true, minigameState.gameOver ? 'sleepy' : 'happy');
     }
 
     uictx.fillStyle = 'rgba(12, 14, 24, 0.9)';
@@ -5574,7 +5574,7 @@ function drawParkWalkHUD(timeSec) {
     // 3D dog positioned walking along the park trail
     if (stage.currentDog) {
         stage.currentDog.position.set(0, 0.4, 0);
-        dogBuilder.updateDogAnimation(stage.currentDog, 1/60, timeSec, 2.5, true, 'happy');
+        dogBuilder.updateDogAnimation(stage.currentDog, 1 / 60, timeSec, 2.5, true, 'happy');
     }
 
     // Top Navigation & Stats Bar

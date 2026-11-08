@@ -68,7 +68,7 @@ graph LR
 | Breed | Name (ES / EN) | Profile & Personality | Special Traits |
 |---|---|---|---|
 | **Dachshund (Teckel)** | **Domi** | Cuerpo largo, orejas caídas y gran corazón | Especialista en túneles de sofá, sigilo absoluto |
-| **Jack Russell** | **LEIA** | Ágil, hiperactiva y motor a propulsión | Salto triple (3x), energía inagotable tras pelotas |
+| **Jack Russell** | **Leia** | Ágil, hiperactiva y motor a propulsión | Salto triple (3x), energía inagotable tras pelotas |
 | **Great Dane Puppy** | **Mora / Little Blackberry** | Esbelta, elegante cachorrita negra azabache | Patas largas de terciopelo, alma noble y protectora |
 | **Carlino Pug** | **Puggy** | Chaparrito, arrugado y experto en siestas | Catedrático del ronquido melódico, suspiros profundos |
 | **Shiba Inu** | **Doge** | Mítico, sonriente y emperador de los memes | Much wow, so doge, dramático a la hora del baño |
