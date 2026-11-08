@@ -346,6 +346,148 @@ class RetroAudioEngine {
                 osc.stop(now + 0.04);
                 break;
             }
+
+            case 'laser': {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(1150, now);
+                osc.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+                gain.gain.setValueAtTime(0.22, now);
+                gain.gain.linearRampToValueAtTime(0.005, now + 0.085);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.085);
+                break;
+            }
+
+            case 'flap': {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(240, now);
+                osc.frequency.exponentialRampToValueAtTime(540, now + 0.06);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.12);
+                break;
+            }
+
+            case 'drill': {
+                for (let i = 0; i < 3; i++) {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const t = now + i * 0.03;
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(120 + (i % 2) * 80, t);
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain.gain.linearRampToValueAtTime(0.01, t + 0.028);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.028);
+                }
+                break;
+            }
+
+            case 'rhythm_hit': {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, now);
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.005, now + 0.09);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.09);
+                break;
+            }
+
+            case 'rhythm_perfect': {
+                [1046.50, 1318.51].forEach((f, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const t = now + idx * 0.04;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(f, t);
+                    gain.gain.setValueAtTime(0.3, t);
+                    gain.gain.exponentialRampToValueAtTime(0.005, t + 0.22);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.22);
+                });
+                break;
+            }
+
+            case 'rhythm_miss': {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.linearRampToValueAtTime(90, now + 0.14);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.15);
+                break;
+            }
+
+            case 'squeak': {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1800, now);
+                osc.frequency.exponentialRampToValueAtTime(2600, now + 0.06);
+                osc.frequency.exponentialRampToValueAtTime(1600, now + 0.14);
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.16);
+                break;
+            }
+
+            case 'toss': {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(680, now + 0.08);
+                osc.frequency.exponentialRampToValueAtTime(220, now + 0.2);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.22);
+                break;
+            }
+
+            case 'dig': {
+                for (let i = 0; i < 3; i++) {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const t = now + i * 0.045;
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(160 - i * 20, t);
+                    gain.gain.setValueAtTime(0.28, t);
+                    gain.gain.linearRampToValueAtTime(0.01, t + 0.04);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.04);
+                }
+                break;
+            }
         }
     }
 
@@ -446,6 +588,11 @@ const SCREENS = {
     MG_LANE: 'MG_LANE',
     MG_GUESS: 'MG_GUESS',
     MG_BOUNCE: 'MG_BOUNCE',
+    MG_INVADERS: 'MG_INVADERS',
+    MG_FLAP: 'MG_FLAP',
+    MG_DIGGER: 'MG_DIGGER',
+    MG_RHYTHM: 'MG_RHYTHM',
+    PARK_WALK: 'PARK_WALK',
     PHOTO_STUDIO: 'PHOTO_STUDIO',
     DIARY: 'DIARY',
     KITCHEN: 'KITCHEN'
@@ -466,7 +613,7 @@ const I18N = {
         pet: 'ACARICIAR',
         rest: 'DESCANSAR',
         wardrobe: 'VESTIDOR',
-        arcade: 'CENTRO ARCADE (6 JUEGOS)',
+        arcade: 'CENTRO ARCADE (10 JUEGOS)',
         back_home: '◀ VOLVER AL HOGAR',
         back: '◀ VOLVER',
         store_title: 'TIENDA & VESTIDOR 3D',
@@ -498,6 +645,14 @@ const I18N = {
         mg_guess_desc: '¿Dónde mira el perrito? Acierta 3 de 5 rondas.',
         mg_bounce_title: '6. BONE JUGGLE (PONG PAW)',
         mg_bounce_desc: 'Rebota la pelota con la cabeza del perrito. ¡Sin caer!',
+        mg_invaders_title: '7. SPACE INVADOGS (GALAXY)',
+        mg_invaders_desc: 'Dispara lásers de hueso a naves gatunas espaciales.',
+        mg_flap_title: '8. PUPPY FLAP (WINGS)',
+        mg_flap_desc: 'Aletea entre columnas y aros de energía sin chocar.',
+        mg_digger_title: '9. DOGGO DIGGER (DRILL)',
+        mg_digger_desc: 'Taladra bloques bajo tierra, esquiva rocas y halla fósiles.',
+        mg_rhythm_title: '10. RHYTHM BARK (BEAT)',
+        mg_rhythm_desc: '4 pistas musicales: presiona las notas con ritmo chiptune.',
         guess_left: '◀ IZQUIERDA',
         guess_right: 'DERECHA ▶',
         guess_win: '¡ACERTASTE! 🎉',
@@ -550,11 +705,38 @@ const I18N = {
         age: 'Edad',
         days: 'días',
         stage: 'Etapa',
+        stage_baby: '🍼 Bebé',
         stage_puppy: '🐶 Cachorro',
+        stage_adult: '🐕 Adulto',
+        stage_hero: '👑 Noble Héroe',
         clean_done: '¡BAÑO FRESQUITO! 🫧',
         cured_done: '¡CURADO Y SANO! 💖',
         slept_well: '¡DURMIÓ RICO! ⚡',
-        fed_done: '¡ÑAM ÑAM! 🥩'
+        fed_done: '¡ÑAM ÑAM! 🥩',
+        park_walk: 'PASEO 🌳',
+        park_title: 'PARQUE CANINO & PASEO 🌳',
+        park_desc: 'Camina, rastrea secretos, desentierra fósiles y saluda amigos.',
+        sniff_btn: '🔍 RASTREAR',
+        greet_btn: '🐾 SALUDAR',
+        park_found_bones: '¡DESENTERRÓ HUESOS! 🦴',
+        park_found_secret: '¡HALLÓ ACCESORIO SECRETO! 🎁',
+        park_friend: '¡NUEVO AMIGO PERRUNO! 🐕',
+        distance: 'Distancia',
+        toys_title: 'JUGUETES 🎾',
+        toy_duck: '🦆 Pato Chillón',
+        toy_frisbee: '🥏 Frisbee',
+        toy_bed: '🛏️ Cama Plush',
+        duck_squeaked: '¡CUAC CUAC! 🦆',
+        frisbee_fetched: '¡ATRAPÓ EL FRISBEE! 🥏',
+        weather_day: '☀️ DÍA',
+        weather_sunset: '🌇 ATARDECER',
+        weather_night: '🌙 NOCHE',
+        weather_rain: '🌧️ LLUVIA',
+        evolution_banner: '¡EVOLUCIÓN DESBLOQUEADA! ⭐',
+        arcade_page_1: '◀ PÁG 1 (1-6)',
+        arcade_page_2: 'PÁG 2 (7-10) ▶',
+        tap_to_flap: '¡TOCA / ESPACIO PARA VOLAR!',
+        drill_btn: 'TALADRAR ⚡'
     },
     en: {
         code: 'EN',
@@ -568,7 +750,7 @@ const I18N = {
         pet: 'PET DOG',
         rest: 'NAP TIME',
         wardrobe: 'WARDROBE',
-        arcade: 'ARCADE HUB (6 GAMES)',
+        arcade: 'ARCADE HUB (10 GAMES)',
         back_home: '◀ BACK TO HOME',
         back: '◀ BACK',
         store_title: '3D WARDROBE & STORE',
@@ -600,6 +782,14 @@ const I18N = {
         mg_guess_desc: 'Which way will puppy turn? Guess 3 of 5 rounds.',
         mg_bounce_title: '6. BONE JUGGLE (PONG PAW)',
         mg_bounce_desc: 'Bounce the ball with puppy head. Keep it up!',
+        mg_invaders_title: '7. SPACE INVADOGS (COSMIC)',
+        mg_invaders_desc: 'Blast bone lasers at alien block-cats in deep orbit.',
+        mg_flap_title: '8. PUPPY FLAP (WINGS)',
+        mg_flap_desc: 'Flap through neon pillars and bone arches smoothly.',
+        mg_digger_title: '9. DOGGO DIGGER (DRILL)',
+        mg_digger_desc: 'Drill subterranean blocks, dodge boulders and find fossils.',
+        mg_rhythm_title: '10. RHYTHM BARK (BEAT)',
+        mg_rhythm_desc: '4 rhythm tracks: tap treats on the beat with chiptune bops.',
         guess_left: '◀ LEFT',
         guess_right: 'RIGHT ▶',
         guess_win: 'CORRECT! 🎉',
@@ -652,11 +842,38 @@ const I18N = {
         age: 'Age',
         days: 'days',
         stage: 'Stage',
+        stage_baby: '🍼 Baby',
         stage_puppy: '🐶 Puppy',
+        stage_adult: '🐕 Adult',
+        stage_hero: '👑 Noble Hero',
         clean_done: 'SQUEAKY CLEAN! 🫧',
         cured_done: 'HEALED & HEALTHY! 💖',
         slept_well: 'WELL RESTED! ⚡',
-        fed_done: 'YUM YUM! 🥩'
+        fed_done: 'YUM YUM! 🥩',
+        park_walk: 'WALK 🌳',
+        park_title: 'DOG PARK & DISCOVERY WALK 🌳',
+        park_desc: 'Stroll along, sniff secrets, unearth fossils and meet dog pals.',
+        sniff_btn: '🔍 SNIFF',
+        greet_btn: '🐾 GREET',
+        park_found_bones: 'DUG UP BONES! 🦴',
+        park_found_secret: 'FOUND SECRET ACCESSORY! 🎁',
+        park_friend: 'NEW DOGGY FRIEND! 🐕',
+        distance: 'Distance',
+        toys_title: 'TOYS 🎾',
+        toy_duck: '🦆 Squeaky Duck',
+        toy_frisbee: '🥏 Frisbee',
+        toy_bed: '🛏️ Plush Bed',
+        duck_squeaked: 'SQUEAK SQUEAK! 🦆',
+        frisbee_fetched: 'FETCHED FRISBEE! 🥏',
+        weather_day: '☀️ DAY',
+        weather_sunset: '🌇 SUNSET',
+        weather_night: '🌙 NIGHT',
+        weather_rain: '🌧️ RAIN',
+        evolution_banner: 'EVOLUTION UNLOCKED! ⭐',
+        arcade_page_1: '◀ PAGE 1 (1-6)',
+        arcade_page_2: 'PAGE 2 (7-10) ▶',
+        tap_to_flap: 'TAP / SPACE TO FLAP!',
+        drill_btn: 'DRILL ⚡'
     },
     ja: {
         code: 'JA',
@@ -670,7 +887,7 @@ const I18N = {
         pet: 'なでなで',
         rest: 'おひるね',
         wardrobe: 'きがえ',
-        arcade: 'アーケード (6ゲーム)',
+        arcade: 'アーケード (10ゲーム)',
         back_home: '◀ ホームへ',
         back: '◀ もどる',
         store_title: '3D きがえ & ショップ',
@@ -702,6 +919,14 @@ const I18N = {
         mg_guess_desc: 'わんこはどっちを向く？3回当てよう！',
         mg_bounce_title: '6. ポン・バウンス (リフティング)',
         mg_bounce_desc: '頭でボールをリフティング！落とさず続けよう！',
+        mg_invaders_title: '7. スペース・インバドッグ',
+        mg_invaders_desc: '宇宙猫インベーダーにホネレーザーを発射！',
+        mg_flap_title: '8. パピー・フラップ (はばたき)',
+        mg_flap_desc: 'ネオンの柱の間を羽ばたいて通り抜けよう。',
+        mg_digger_title: '9. わんこディガー (ドリル)',
+        mg_digger_desc: '地面を掘り進み、岩を避けて化石をゲット！',
+        mg_rhythm_title: '10. リズム・バーク (ビート)',
+        mg_rhythm_desc: '4つのレーンで流れる音符をリズムに合わせてタップ！',
         guess_left: '◀ ひだり',
         guess_right: 'みぎ ▶',
         guess_win: 'あたり！🎉',
@@ -754,11 +979,38 @@ const I18N = {
         age: 'ねんれい',
         days: 'にち',
         stage: '成長期',
+        stage_baby: '🍼 赤ちゃん',
         stage_puppy: '🐶 こいぬ',
+        stage_adult: '🐕 おとな',
+        stage_hero: '👑 高貴な英雄',
         clean_done: 'ピカピカきれい！🫧',
         cured_done: '元気いっぱい！💖',
         slept_well: 'すっきり快眠！⚡',
-        fed_done: 'おいしいワン！🥩'
+        fed_done: 'おいしいワン！🥩',
+        park_walk: 'おさんぽ 🌳',
+        park_title: 'わんこパーク & おさんぽ 🌳',
+        park_desc: '歩いて秘密を探し、化石を発掘してお友達に挨拶しよう。',
+        sniff_btn: '🔍 クンクン',
+        greet_btn: '🐾 あいさつ',
+        park_found_bones: 'ホネを発掘！🦴',
+        park_found_secret: '秘密のアイテム発見！🎁',
+        park_friend: 'あたらしいお友達！🐕',
+        distance: 'きょり',
+        toys_title: 'おもちゃ 🎾',
+        toy_duck: '🦆 あひる',
+        toy_frisbee: '🥏 フリスビー',
+        toy_bed: '🛏️ ベッド',
+        duck_squeaked: 'ガーガー！🦆',
+        frisbee_fetched: 'ナイスキャッチ！🥏',
+        weather_day: '☀️ ひる',
+        weather_sunset: '🌇 ゆうがた',
+        weather_night: '🌙 よる',
+        weather_rain: '🌧️ あめ',
+        evolution_banner: '進化をとげた！⭐',
+        arcade_page_1: '◀ ページ1 (1-6)',
+        arcade_page_2: 'ページ2 (7-10) ▶',
+        tap_to_flap: 'タップ / スペースで飛ぶ！',
+        drill_btn: 'ドリル ⚡'
     },
     pt: {
         code: 'PT',
@@ -772,7 +1024,7 @@ const I18N = {
         pet: 'ACARICIAR',
         rest: 'SONECA',
         wardrobe: 'GUARDA-ROUPA',
-        arcade: 'CENTRO ARCADE (6 JOGOS)',
+        arcade: 'CENTRO ARCADE (10 JOGOS)',
         back_home: '◀ VOLTAR AO INÍCIO',
         back: '◀ VOLTAR',
         store_title: 'LOJA & GUARDA-ROUPA 3D',
@@ -804,6 +1056,14 @@ const I18N = {
         mg_guess_desc: 'Para onde o cão olha? Acerte 3 de 5 rodadas.',
         mg_bounce_title: '6. MALABARISMO (PONG PAW)',
         mg_bounce_desc: 'Rebata a bola na cabeça do cãozinho sem deixar cair!',
+        mg_invaders_title: '7. SPACE INVADOGS (GALÁXIA)',
+        mg_invaders_desc: 'Atire lasers de osso em gatos espaciais alienígenas.',
+        mg_flap_title: '8. PUPPY FLAP (ASAS)',
+        mg_flap_desc: 'Bata as asas entre colunas e aros sem colidir.',
+        mg_digger_title: '9. DOGGO DIGGER (BROCA)',
+        mg_digger_desc: 'Perfure blocos no subsolo, desvie de pedras e ache fósseis.',
+        mg_rhythm_title: '10. RHYTHM BARK (RITMO)',
+        mg_rhythm_desc: '4 pistas musicais: acerte as notas no ritmo chiptune.',
         guess_left: '◀ ESQUERDA',
         guess_right: 'DIREITA ▶',
         guess_win: 'ACERTOU! 🎉',
@@ -856,11 +1116,38 @@ const I18N = {
         age: 'Idade',
         days: 'dias',
         stage: 'Fase',
+        stage_baby: '🍼 Bebê',
         stage_puppy: '🐶 Filhote',
+        stage_adult: '🐕 Adulto',
+        stage_hero: '👑 Nobre Herói',
         clean_done: 'BANHO TOMADO! 🫧',
         cured_done: 'CURADO E SAUDÁVEL! 💖',
         slept_well: 'BEM DESCANSADO! ⚡',
-        fed_done: 'NHAM NHAM! 🥩'
+        fed_done: 'NHAM NHAM! 🥩',
+        park_walk: 'PASSEIO 🌳',
+        park_title: 'PARQUE CANINO & PASSEIO 🌳',
+        park_desc: 'Passeie, fareje segredos, desenterre fósseis e faça amigos.',
+        sniff_btn: '🔍 FAREJAR',
+        greet_btn: '🐾 CUMPRIMENTAR',
+        park_found_bones: 'DESENTERROU OSSOS! 🦴',
+        park_found_secret: 'ACHOU ITEM SECRETO! 🎁',
+        park_friend: 'NOVO AMIGO CÃOZINHO! 🐕',
+        distance: 'Distância',
+        toys_title: 'BRINQUEDOS 🎾',
+        toy_duck: '🦆 Pato Barulhento',
+        toy_frisbee: '🥏 Frisbee',
+        toy_bed: '🛏️ Cama Macia',
+        duck_squeaked: 'QUACK QUACK! 🦆',
+        frisbee_fetched: 'PEGOU O FRISBEE! 🥏',
+        weather_day: '☀️ DIA',
+        weather_sunset: '🌇 PÔR DO SOL',
+        weather_night: '🌙 NOITE',
+        weather_rain: '🌧️ CHUVA',
+        evolution_banner: 'EVOLUÇÃO DESBLOQUEADA! ⭐',
+        arcade_page_1: '◀ PÁG 1 (1-6)',
+        arcade_page_2: 'PÁG 2 (7-10) ▶',
+        tap_to_flap: 'TOQUE / ESPAÇO PARA VOAR!',
+        drill_btn: 'BROCA ⚡'
     }
 };
 
@@ -1454,6 +1741,54 @@ const ACHIEVEMENTS = [
         titles: { es: 'Malabarista Pro', en: 'Master Juggler', ja: 'リフティング名人', pt: 'Malabarista Pro' },
         descs: { es: 'Rebota el hueso 15 veces en Bone Juggle', en: 'Bounce the bone 15 times in Bone Juggle', ja: 'ボーンジャグリングで15回リフティング', pt: 'Rebata o osso 15 vezes no Bone Juggle' },
         reward: 90, completed: false, current: 0, max: 15
+    },
+    {
+        id: 'cosmic_canine',
+        title: 'Can Cósmico',
+        desc: 'Derrota 15 naves gatunas en Space Invadogs',
+        titles: { es: 'Can Cósmico', en: 'Cosmic Canine', ja: 'コズミック・ドッグ', pt: 'Cão Cósmico' },
+        descs: { es: 'Derrota 15 naves gatunas en Space Invadogs', en: 'Defeat 15 alien block-cats in Space Invadogs', ja: 'スペースインバドッグで猫インベーダーを15匹撃破', pt: 'Derrote 15 gatos alienígenas em Space Invadogs' },
+        reward: 100, completed: false, current: 0, max: 15
+    },
+    {
+        id: 'sky_aviator',
+        title: 'Aviador Neón',
+        desc: 'Cruza 10 arcos en Puppy Flap',
+        titles: { es: 'Aviador Neón', en: 'Neon Aviator', ja: 'ネオン・パイロット', pt: 'Aviador Neon' },
+        descs: { es: 'Cruza 10 arcos en Puppy Flap', en: 'Pass 10 bone arches in Puppy Flap', ja: 'パピーフラップで10個のゲートを通過', pt: 'Atravesse 10 arcos em Puppy Flap' },
+        reward: 100, completed: false, current: 0, max: 10
+    },
+    {
+        id: 'master_miner',
+        title: 'Topógrafo Fósil',
+        desc: 'Excava 50 bloques de profundidad en Doggo Digger',
+        titles: { es: 'Topógrafo Fósil', en: 'Master Miner', ja: 'マスターディガー', pt: 'Mestre Mineiro' },
+        descs: { es: 'Excava 50 bloques de profundidad en Doggo Digger', en: 'Dig 50 blocks deep in Doggo Digger', ja: 'わんこディガーで50ブロック掘り進む', pt: 'Cave 50 blocos de profundidade em Doggo Digger' },
+        reward: 120, completed: false, current: 0, max: 50
+    },
+    {
+        id: 'rhythm_star',
+        title: 'Estrella Chiptune',
+        desc: 'Logra 15 notas Perfectas en Rhythm Bark',
+        titles: { es: 'Estrella Chiptune', en: 'Rhythm Star', ja: 'リズムスター', pt: 'Estrela do Ritmo' },
+        descs: { es: 'Logra 15 notas Perfectas en Rhythm Bark', en: 'Hit 15 Perfect notes in Rhythm Bark', ja: 'リズムバークでパーフェクトを15回キメる', pt: 'Acerte 15 notas Perfeitas em Rhythm Bark' },
+        reward: 120, completed: false, current: 0, max: 15
+    },
+    {
+        id: 'park_explorer',
+        title: 'Explorador del Parque',
+        desc: 'Realiza 3 paseos y rastrea tesoros al aire libre',
+        titles: { es: 'Explorador del Parque', en: 'Park Explorer', ja: 'おさんぽマスター', pt: 'Explorador do Parque' },
+        descs: { es: 'Realiza 3 paseos y rastrea tesoros al aire libre', en: 'Take 3 park walks and sniff out treasures', ja: 'おさんぽに3回出かけて宝物を探そう', pt: 'Faça 3 passeios no parque e fareje tesouros' },
+        reward: 80, completed: false, current: 0, max: 3
+    },
+    {
+        id: 'noble_hero',
+        title: 'Héroe Legendario',
+        desc: 'Evoluciona a tu mascota a su Forma Noble Heroica',
+        titles: { es: 'Héroe Legendario', en: 'Noble Hero', ja: '伝説のヒーロー', pt: 'Herói Lendário' },
+        descs: { es: 'Evoluciona a tu mascota a su Forma Noble Heroica', en: 'Evolve your dog into its Noble Hero Form', ja: '愛犬を高貴なヒーロー形態へ進化させよう', pt: 'Evolua seu cãozinho para a Forma Nobre Heróica' },
+        reward: 200, completed: false, current: 0, max: 1
     }
 ];
 
@@ -1553,6 +1888,8 @@ const defaultState = {
         weightKg: 4.5,
         ageDays: 1,
         lcdMode: false,
+        stage: 'puppy',
+        weather: 'day',
         lastTick: Date.now()
     },
     highScores: {
@@ -1561,7 +1898,11 @@ const defaultState = {
         MG_JUMP: 0,
         MG_LANE: 0,
         MG_GUESS: 0,
-        MG_BOUNCE: 0
+        MG_BOUNCE: 0,
+        MG_INVADERS: 0,
+        MG_FLAP: 0,
+        MG_DIGGER: 0,
+        MG_RHYTHM: 0
     },
     stats: {
         totalPets: 0,
@@ -1569,7 +1910,14 @@ const defaultState = {
         feverCount: 0,
         photosSnapped: 0,
         poopsCleaned: 0,
-        mealsCooked: 0
+        mealsCooked: 0,
+        invadersKilled: 0,
+        flapGatesPassed: 0,
+        blocksDug: 0,
+        rhythmPerfects: 0,
+        walksTaken: 0,
+        toysPlayed: 0,
+        evolvedStages: ['puppy']
     },
     achievements: {},
     soundEnabled: true
@@ -2421,11 +2769,69 @@ class StageManager {
         this.ballVelocity.z *= 0.96;
     }
 
+    setWeather(weather) {
+        if (!state.vitals) state.vitals = {};
+        state.vitals.weather = weather;
+        if (weather === 'sunset') {
+            this.ambientLight.color.setHex(0xffaa77);
+            this.sunLight.color.setHex(0xff7733);
+            this.rimLight.color.setHex(0xffd700);
+            this.scene.background = new THREE.Color(0x3d1a24);
+        } else if (weather === 'night') {
+            this.ambientLight.color.setHex(0x1a2138);
+            this.sunLight.color.setHex(0x63b3ed);
+            this.rimLight.color.setHex(0x9f7aea);
+            this.scene.background = new THREE.Color(0x0a0e1a);
+        } else if (weather === 'rain') {
+            this.ambientLight.color.setHex(0x4a5568);
+            this.sunLight.color.setHex(0x718096);
+            this.rimLight.color.setHex(0x4fd1c5);
+            this.scene.background = new THREE.Color(0x1a202c);
+        } else {
+            this.ambientLight.color.setHex(0xd6e4ff);
+            this.sunLight.color.setHex(0xfffaed);
+            this.rimLight.color.setHex(0x00f0ff);
+            this.scene.background = new THREE.Color(0x0c0e18);
+        }
+    }
+
     spawnDog(breed, equipped) {
         if (this.currentDog) {
             this.scene.remove(this.currentDog);
         }
         this.currentDog = dogBuilder.buildDog(breed, equipped);
+
+        // Life-stage 3D model scaling
+        const st = (state && state.vitals && state.vitals.stage) || 'puppy';
+        let stageScale = 1.0;
+        if (st === 'baby') stageScale = 0.72;
+        else if (st === 'puppy') stageScale = 0.92;
+        else if (st === 'adult') stageScale = 1.0;
+        else if (st === 'hero') stageScale = 1.1;
+
+        this.currentDog.scale.set(stageScale, stageScale, stageScale);
+
+        // Heroic Halo & Cape for Hero form
+        if (st === 'hero') {
+            const haloGeo = new THREE.TorusGeometry(0.55, 0.06, 12, 32);
+            const haloMat = new THREE.MeshStandardMaterial({
+                color: 0xffd700,
+                emissive: 0xffcc00,
+                emissiveIntensity: 1.2
+            });
+            const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+            haloMesh.rotation.x = Math.PI / 2;
+            haloMesh.position.set(0.6, 2.2, 0);
+            this.currentDog.add(haloMesh);
+
+            const capeGeo = new THREE.BoxGeometry(1.2, 0.08, 1.4);
+            const capeMat = dogBuilder.getMaterial(0xd53f8c, 0.4, 0.1);
+            const capeMesh = new THREE.Mesh(capeGeo, capeMat);
+            capeMesh.position.set(-0.3, 0.85, 0);
+            capeMesh.rotation.z = 0.25;
+            this.currentDog.add(capeMesh);
+        }
+
         this.currentDog.position.set(0, 0, 0);
         this.currentDog.rotation.y = -Math.PI / 6;
         this.scene.add(this.currentDog);
@@ -2577,7 +2983,40 @@ const minigameState = {
     ballVx: 170,
     ballVy: 220,
     ballRadius: 14,
-    bounces: 0
+    bounces: 0,
+
+    // Minigame 7: Space Invadogs
+    invaders: [],
+    invaderBullets: [],
+    playerBullets: [],
+    invaderShootTimer: 0,
+    invaderDir: 1,
+    invaderSpeed: 55,
+    laserCooldown: 0,
+
+    // Minigame 8: Puppy Flap
+    flapVelocity: 0,
+    flapPipes: [],
+    flapSpawnTimer: 0,
+    flapScore: 0,
+
+    // Minigame 9: Doggo Digger
+    drillCol: 2,
+    drillDepth: 0,
+    diggerGrid: [],
+    stamina: 100,
+
+    // Minigame 10: Rhythm Bark
+    rhythmNotes: [],
+    rhythmTimer: 0,
+    rhythmCombo: 0,
+    rhythmFeedback: null,
+    rhythmFeedbackTimer: 0,
+
+    // Outdoor Park Walk
+    walkDistance: 0,
+    parkEvent: null,
+    parkTimer: 0
 };
 
 function startMinigame(type) {
@@ -2648,6 +3087,67 @@ function startMinigame(type) {
         minigameState.lives = 3;
         minigameState.playerX = LOGICAL_WIDTH / 2;
         minigameState.playerY = LOGICAL_HEIGHT - 130;
+    } else if (type === SCREENS.MG_INVADERS) {
+        minigameState.playerX = LOGICAL_WIDTH / 2;
+        minigameState.playerY = LOGICAL_HEIGHT - 130;
+        minigameState.invaders = [];
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 6; c++) {
+                minigameState.invaders.push({
+                    x: 45 + c * 55,
+                    y: 85 + r * 45,
+                    w: 36,
+                    h: 28,
+                    row: r,
+                    alive: true,
+                    color: r === 0 ? '#ff2a85' : r === 1 ? '#00f0ff' : '#05ffa1'
+                });
+            }
+        }
+        minigameState.invaderBullets = [];
+        minigameState.playerBullets = [];
+        minigameState.invaderShootTimer = 1.0;
+        minigameState.invaderDir = 1;
+        minigameState.invaderSpeed = 55;
+        minigameState.laserCooldown = 0;
+        minigameState.lives = 3;
+    } else if (type === SCREENS.MG_FLAP) {
+        minigameState.playerX = 85;
+        minigameState.playerY = LOGICAL_HEIGHT / 2 - 30;
+        minigameState.playerVy = 0;
+        minigameState.flapVelocity = 0;
+        minigameState.flapPipes = [];
+        minigameState.flapSpawnTimer = 0.6;
+        minigameState.flapScore = 0;
+        minigameState.lives = 1;
+    } else if (type === SCREENS.MG_DIGGER) {
+        minigameState.drillCol = 2;
+        minigameState.drillDepth = 0;
+        minigameState.stamina = 100;
+        minigameState.diggerGrid = [];
+        for (let r = 0; r < 14; r++) {
+            const row = [];
+            for (let c = 0; c < 5; c++) {
+                const rand = Math.random();
+                let bType = 'dirt';
+                let color = '#8a532d';
+                let hp = 1;
+                if (rand < 0.12) { bType = 'rock'; color = '#4a5568'; hp = 2; }
+                else if (rand < 0.22) { bType = 'fossil'; color = '#ffd700'; hp = 1; }
+                else if (rand < 0.28) { bType = 'gem'; color = '#00f0ff'; hp = 1; }
+                else if (rand < 0.35) { bType = 'stamina'; color = '#48bb78'; hp = 1; }
+                row.push({ type: bType, color, hp, c, r });
+            }
+            minigameState.diggerGrid.push(row);
+        }
+        minigameState.lives = 3;
+    } else if (type === SCREENS.MG_RHYTHM) {
+        minigameState.rhythmNotes = [];
+        minigameState.rhythmTimer = 0;
+        minigameState.rhythmCombo = 0;
+        minigameState.rhythmFeedback = null;
+        minigameState.rhythmFeedbackTimer = 0;
+        minigameState.lives = 5;
     }
 
     currentScreen = type;
@@ -3250,6 +3750,463 @@ function updateMinigameBounce(dt) {
             minigameState.ballVx = (Math.random() > 0.5 ? 1 : -1) * (150 + Math.random() * 40);
             minigameState.ballVy = 200;
         }
+    }
+}
+
+// --- MINIGAME 7: SPACE INVADOGS (COSMIC SHMUP) ---
+function updateMinigameInvaders(dt) {
+    if (minigameState.gameOver) return;
+
+    let effectiveDt = dt;
+    if (minigameState.slowMoActive) {
+        effectiveDt *= 0.45;
+        minigameState.slowMoTimer -= dt;
+        if (minigameState.slowMoTimer <= 0) minigameState.slowMoActive = false;
+    }
+
+    if (minigameState.isFever) {
+        minigameState.feverTimer -= dt;
+        if (minigameState.feverTimer <= 0) {
+            minigameState.isFever = false;
+            minigameState.comboGauge = 0;
+            minigameState.multiplier = 1;
+            audio.setTrack('arcade');
+        }
+    }
+
+    // Auto-laser fire every 0.35s (or faster in Fever mode: 0.18s)
+    minigameState.laserCooldown = (minigameState.laserCooldown || 0) - effectiveDt;
+    if (minigameState.laserCooldown <= 0) {
+        minigameState.laserCooldown = minigameState.isFever ? 0.18 : 0.35;
+        minigameState.playerBullets.push({
+            x: minigameState.playerX,
+            y: minigameState.playerY - 20,
+            vy: -480,
+            w: 8,
+            h: 18
+        });
+        audio.play('laser');
+    }
+
+    // Update player lasers
+    for (let i = minigameState.playerBullets.length - 1; i >= 0; i--) {
+        const b = minigameState.playerBullets[i];
+        b.y += b.vy * effectiveDt;
+        if (b.y < 30) {
+            minigameState.playerBullets.splice(i, 1);
+            continue;
+        }
+
+        // Check collision against invaders
+        let hit = false;
+        for (const inv of minigameState.invaders) {
+            if (inv.alive &&
+                b.x >= inv.x - inv.w / 2 && b.x <= inv.x + inv.w / 2 &&
+                b.y >= inv.y - inv.h / 2 && b.y <= inv.y + inv.h / 2) {
+
+                inv.alive = false;
+                hit = true;
+                const pts = (inv.row === 0 ? 150 : inv.row === 1 ? 100 : 75) * minigameState.multiplier;
+                minigameState.score += pts;
+                addCombo(14);
+                state.stats.invadersKilled = (state.stats.invadersKilled || 0) + 1;
+                audio.play('coin');
+                triggerHaptic('light');
+                vfx.emit(inv.x, inv.y, 16, 'spark');
+                vfx.addText('+' + pts, inv.x - 15, inv.y - 12, '#ffd700');
+
+                if (state.stats.invadersKilled >= 15) {
+                    checkAchievement('cosmic_canine');
+                }
+                break;
+            }
+        }
+        if (hit) {
+            minigameState.playerBullets.splice(i, 1);
+        }
+    }
+
+    // Invaders movement
+    let hitEdge = false;
+    let aliveCount = 0;
+    for (const inv of minigameState.invaders) {
+        if (!inv.alive) continue;
+        aliveCount++;
+        inv.x += minigameState.invaderDir * minigameState.invaderSpeed * effectiveDt;
+        if (inv.x < 30 || inv.x > LOGICAL_WIDTH - 30) {
+            hitEdge = true;
+        }
+    }
+
+    if (hitEdge) {
+        minigameState.invaderDir *= -1;
+        minigameState.invaderSpeed = Math.min(180, minigameState.invaderSpeed + 8);
+        for (const inv of minigameState.invaders) {
+            if (inv.alive) {
+                inv.y += 18;
+                if (inv.y > minigameState.playerY - 20) {
+                    minigameState.lives = 0;
+                    endMinigame();
+                    return;
+                }
+            }
+        }
+    }
+
+    // Respawn wave if all eliminated
+    if (aliveCount === 0) {
+        audio.play('fanfare');
+        minigameState.score += 500 * minigameState.multiplier;
+        vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, 30, 'confetti');
+        vfx.addText('WAVE CLEAR! +500', LOGICAL_WIDTH / 2 - 80, LOGICAL_HEIGHT / 2 - 30, '#00f0ff');
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 6; c++) {
+                minigameState.invaders.push({
+                    x: 45 + c * 55,
+                    y: 85 + r * 45,
+                    w: 36,
+                    h: 28,
+                    row: r,
+                    alive: true,
+                    color: r === 0 ? '#ff2a85' : r === 1 ? '#00f0ff' : '#05ffa1'
+                });
+            }
+        }
+        minigameState.invaderSpeed += 20;
+    }
+
+    // Invader bullets shoot down
+    minigameState.invaderShootTimer -= effectiveDt;
+    if (minigameState.invaderShootTimer <= 0) {
+        minigameState.invaderShootTimer = 1.0 + Math.random() * 0.8;
+        const alives = minigameState.invaders.filter(inv => inv.alive);
+        if (alives.length > 0) {
+            const shooter = alives[Math.floor(Math.random() * alives.length)];
+            minigameState.invaderBullets.push({
+                x: shooter.x,
+                y: shooter.y + 14,
+                vy: 230,
+                w: 6,
+                h: 14
+            });
+        }
+    }
+
+    // Update invader bullets
+    for (let i = minigameState.invaderBullets.length - 1; i >= 0; i--) {
+        const b = minigameState.invaderBullets[i];
+        b.y += b.vy * effectiveDt;
+        if (b.y > LOGICAL_HEIGHT + 20) {
+            minigameState.invaderBullets.splice(i, 1);
+            continue;
+        }
+
+        if (Math.abs(b.x - minigameState.playerX) < 32 && Math.abs(b.y - minigameState.playerY) < 26) {
+            minigameState.invaderBullets.splice(i, 1);
+            if (minigameState.shieldActive) {
+                minigameState.shieldActive = false;
+                audio.play('fever');
+                vfx.emit(minigameState.playerX, minigameState.playerY, 12, 'gold');
+                continue;
+            }
+            minigameState.lives--;
+            audio.play('hit');
+            triggerHaptic('heavy');
+            minigameState.screenShake = 12;
+            vfx.emit(minigameState.playerX, minigameState.playerY, 15, 'spark');
+            if (minigameState.lives <= 0) {
+                endMinigame();
+                return;
+            }
+        }
+    }
+}
+
+// --- MINIGAME 8: PUPPY FLAP (NEON WINGS) ---
+function updateMinigameFlap(dt) {
+    if (minigameState.gameOver) return;
+
+    let effectiveDt = dt;
+    if (minigameState.slowMoActive) {
+        effectiveDt *= 0.45;
+        minigameState.slowMoTimer -= dt;
+        if (minigameState.slowMoTimer <= 0) minigameState.slowMoActive = false;
+    }
+
+    minigameState.flapVelocity += 1050 * effectiveDt;
+    minigameState.playerY += minigameState.flapVelocity * effectiveDt;
+
+    if (minigameState.playerY < 60) {
+        minigameState.playerY = 60;
+        minigameState.flapVelocity = 0;
+    }
+    if (minigameState.playerY > LOGICAL_HEIGHT - 65) {
+        minigameState.playerY = LOGICAL_HEIGHT - 65;
+        audio.play('hit');
+        triggerHaptic('heavy');
+        minigameState.lives = 0;
+        endMinigame();
+        return;
+    }
+
+    minigameState.flapSpawnTimer -= effectiveDt;
+    if (minigameState.flapSpawnTimer <= 0) {
+        minigameState.flapSpawnTimer = 1.75;
+        const gapSize = 165;
+        const gapY = 140 + Math.random() * (LOGICAL_HEIGHT - 380);
+        minigameState.flapPipes.push({
+            x: LOGICAL_WIDTH + 40,
+            gapY: gapY,
+            gapSize: gapSize,
+            w: 58,
+            passed: false
+        });
+    }
+
+    for (let i = minigameState.flapPipes.length - 1; i >= 0; i--) {
+        const p = minigameState.flapPipes[i];
+        p.x -= 160 * effectiveDt;
+
+        if (!p.passed && p.x + p.w < minigameState.playerX) {
+            p.passed = true;
+            minigameState.score += 50 * minigameState.multiplier;
+            minigameState.flapScore = (minigameState.flapScore || 0) + 1;
+            state.stats.flapGatesPassed = (state.stats.flapGatesPassed || 0) + 1;
+            addCombo(16);
+            audio.play('coin');
+            triggerHaptic('light');
+            vfx.emit(minigameState.playerX, minigameState.playerY, 12, 'gold');
+            vfx.addText('+50 🦴', minigameState.playerX, minigameState.playerY - 20, '#00f0ff');
+
+            if (state.stats.flapGatesPassed >= 10) {
+                checkAchievement('sky_aviator');
+            }
+        }
+
+        const playerRadius = 18;
+        if (minigameState.playerX + playerRadius > p.x && minigameState.playerX - playerRadius < p.x + p.w) {
+            if (minigameState.playerY - playerRadius < p.gapY || minigameState.playerY + playerRadius > p.gapY + p.gapSize) {
+                if (minigameState.shieldActive) {
+                    minigameState.shieldActive = false;
+                    audio.play('fever');
+                    vfx.emit(minigameState.playerX, minigameState.playerY, 14, 'gold');
+                } else {
+                    audio.play('hit');
+                    triggerHaptic('heavy');
+                    minigameState.lives = 0;
+                    endMinigame();
+                    return;
+                }
+            }
+        }
+
+        if (p.x < -80) {
+            minigameState.flapPipes.splice(i, 1);
+        }
+    }
+}
+
+// --- MINIGAME 9: DOGGO DIGGER (FOSSIL DRILL) ---
+function updateMinigameDigger(dt) {
+    if (minigameState.gameOver) return;
+
+    let effectiveDt = dt;
+    minigameState.stamina = Math.max(0, minigameState.stamina - 4.5 * effectiveDt);
+    if (minigameState.stamina <= 0) {
+        audio.play('hit');
+        vfx.addText('OUT OF STAMINA!', LOGICAL_WIDTH / 2 - 80, LOGICAL_HEIGHT / 2, '#e53e3e');
+        minigameState.lives = 0;
+        endMinigame();
+        return;
+    }
+
+    const colWidth = (LOGICAL_WIDTH - 40) / 5;
+    const targetX = 20 + minigameState.drillCol * colWidth + colWidth / 2;
+    minigameState.playerX += (targetX - minigameState.playerX) * 14 * effectiveDt;
+    minigameState.playerY = 160;
+}
+
+function drillCurrentBlock() {
+    if (minigameState.gameOver || minigameState.type !== SCREENS.MG_DIGGER) return;
+    if (!minigameState.diggerGrid || minigameState.diggerGrid.length === 0) return;
+
+    const topRow = minigameState.diggerGrid[0];
+    const block = topRow[minigameState.drillCol];
+
+    if (block) {
+        block.hp--;
+        audio.play('drill');
+        triggerHaptic('medium');
+        vfx.emit(minigameState.playerX, minigameState.playerY + 40, 10, 'spark');
+
+        if (block.hp <= 0) {
+            state.stats.blocksDug = (state.stats.blocksDug || 0) + 1;
+            minigameState.drillDepth = (minigameState.drillDepth || 0) + 1;
+
+            if (block.type === 'fossil') {
+                minigameState.score += 150 * minigameState.multiplier;
+                minigameState.earnedBones += 5;
+                state.bones += 5;
+                audio.play('coin');
+                vfx.emit(minigameState.playerX, minigameState.playerY + 30, 16, 'gold');
+                vfx.addText('+150 🦴 FÓSIL', minigameState.playerX - 25, minigameState.playerY + 10, '#ffd700');
+            } else if (block.type === 'gem') {
+                minigameState.score += 250 * minigameState.multiplier;
+                minigameState.earnedBones += 10;
+                state.bones += 10;
+                audio.play('fanfare');
+                vfx.emit(minigameState.playerX, minigameState.playerY + 30, 20, 'confetti');
+                vfx.addText('+250 💎 GEMA', minigameState.playerX - 25, minigameState.playerY + 10, '#00f0ff');
+            } else if (block.type === 'stamina') {
+                minigameState.stamina = Math.min(100, minigameState.stamina + 25);
+                audio.play('cure');
+                vfx.addText('+STAMINA ⚡', minigameState.playerX - 25, minigameState.playerY + 10, '#48bb78');
+            } else {
+                minigameState.score += 20 * minigameState.multiplier;
+            }
+
+            addCombo(10);
+
+            if (state.stats.blocksDug >= 50) {
+                checkAchievement('master_miner');
+            }
+
+            // Remove dug row and scroll grid down
+            minigameState.diggerGrid.shift();
+
+            // Append new row at bottom
+            const newRow = [];
+            for (let c = 0; c < 5; c++) {
+                const rand = Math.random();
+                let bType = 'dirt';
+                let color = '#8a532d';
+                let hp = 1;
+                if (rand < 0.14) { bType = 'rock'; color = '#4a5568'; hp = 2; }
+                else if (rand < 0.24) { bType = 'fossil'; color = '#ffd700'; hp = 1; }
+                else if (rand < 0.30) { bType = 'gem'; color = '#00f0ff'; hp = 1; }
+                else if (rand < 0.38) { bType = 'stamina'; color = '#48bb78'; hp = 1; }
+                newRow.push({ type: bType, color, hp, c });
+            }
+            minigameState.diggerGrid.push(newRow);
+        }
+    }
+}
+
+// --- MINIGAME 10: RHYTHM BARK (PAW BEAT) ---
+function updateMinigameRhythm(dt) {
+    if (minigameState.gameOver) return;
+
+    let effectiveDt = dt;
+    minigameState.rhythmTimer += effectiveDt;
+
+    // Spawn rhythm note every 0.55s
+    if (minigameState.rhythmTimer > 0.55) {
+        minigameState.rhythmTimer = 0;
+        const lane = Math.floor(Math.random() * 4);
+        const icons = ['🦴', '🥩', '🧁', '⭐'];
+        minigameState.rhythmNotes.push({
+            lane: lane,
+            y: 40,
+            vy: 320,
+            icon: icons[lane],
+            hit: false
+        });
+    }
+
+    const hitLineY = LOGICAL_HEIGHT - 120;
+
+    for (let i = minigameState.rhythmNotes.length - 1; i >= 0; i--) {
+        const n = minigameState.rhythmNotes[i];
+        n.y += n.vy * effectiveDt;
+
+        if (n.y > hitLineY + 60 && !n.hit) {
+            audio.play('rhythm_miss');
+            minigameState.rhythmCombo = 0;
+            minigameState.multiplier = 1;
+            minigameState.lives--;
+            minigameState.rhythmFeedback = 'MISS!';
+            minigameState.rhythmFeedbackTimer = 0.5;
+            minigameState.rhythmNotes.splice(i, 1);
+            if (minigameState.lives <= 0) {
+                endMinigame();
+                return;
+            }
+            continue;
+        }
+
+        if (n.y > LOGICAL_HEIGHT + 30) {
+            minigameState.rhythmNotes.splice(i, 1);
+        }
+    }
+
+    if (minigameState.rhythmFeedbackTimer > 0) {
+        minigameState.rhythmFeedbackTimer -= effectiveDt;
+    }
+}
+
+function hitRhythmTrack(lane) {
+    if (minigameState.gameOver || minigameState.type !== SCREENS.MG_RHYTHM) return;
+    const hitLineY = LOGICAL_HEIGHT - 120;
+
+    let closest = null;
+    let closestDist = 999;
+    let closestIdx = -1;
+
+    for (let i = 0; i < minigameState.rhythmNotes.length; i++) {
+        const n = minigameState.rhythmNotes[i];
+        if (n.lane === lane && !n.hit) {
+            const dist = Math.abs(n.y - hitLineY);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closest = n;
+                closestIdx = i;
+            }
+        }
+    }
+
+    if (closest && closestDist < 75) {
+        closest.hit = true;
+        minigameState.rhythmNotes.splice(closestIdx, 1);
+        const laneW = (LOGICAL_WIDTH - 40) / 4;
+        const lx = 20 + lane * laneW + laneW / 2;
+
+        if (closestDist < 26) {
+            audio.play('rhythm_perfect');
+            minigameState.score += 200 * minigameState.multiplier;
+            minigameState.rhythmCombo = (minigameState.rhythmCombo || 0) + 1;
+            state.stats.rhythmPerfects = (state.stats.rhythmPerfects || 0) + 1;
+            addCombo(20);
+            minigameState.rhythmFeedback = 'PERFECT! 🌟';
+            minigameState.rhythmFeedbackTimer = 0.5;
+            vfx.emit(lx, hitLineY, 18, 'gold');
+            vfx.addText('+200', lx - 15, hitLineY - 25, '#ffd700');
+
+            if (state.stats.rhythmPerfects >= 15) {
+                checkAchievement('rhythm_star');
+            }
+        } else {
+            audio.play('rhythm_hit');
+            minigameState.score += 100 * minigameState.multiplier;
+            minigameState.rhythmCombo = (minigameState.rhythmCombo || 0) + 1;
+            addCombo(10);
+            minigameState.rhythmFeedback = 'GREAT! ✨';
+            minigameState.rhythmFeedbackTimer = 0.4;
+            vfx.emit(lx, hitLineY, 12, 'spark');
+            vfx.addText('+100', lx - 15, hitLineY - 20, '#00f0ff');
+        }
+        triggerHaptic('light');
+    } else {
+        audio.play('rhythm_miss');
+        minigameState.rhythmCombo = 0;
+        minigameState.multiplier = 1;
+    }
+}
+
+// --- PHASE 3: OUTDOOR PARK WALK UPDATE ---
+function updateParkWalk(dt) {
+    minigameState.walkDistance = (minigameState.walkDistance || 0) + dt * 10;
+    if (minigameState.parkTimer > 0) {
+        minigameState.parkTimer -= dt;
     }
 }
 
