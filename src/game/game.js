@@ -5851,6 +5851,87 @@ function handleInteraction(pos) {
                 return;
             }
 
+            if (hit.id === 'arcade_page_0') {
+                arcadeMenuPage = 0;
+                audio.play('click');
+                return;
+            }
+            if (hit.id === 'arcade_page_1') {
+                arcadeMenuPage = 1;
+                audio.play('click');
+                return;
+            }
+            if (hit.id === 'goto_park') {
+                currentScreen = SCREENS.PARK_WALK;
+                stage.setScreen(currentScreen);
+                audio.play('walk');
+                minigameState.walkDistance = 0;
+                minigameState.walkBonesFound = 0;
+                return;
+            }
+            if (hit.id === 'toggle_weather') {
+                const weathers = ['day', 'sunset', 'night', 'rain'];
+                const nextW = weathers[(weathers.indexOf(state.weather || 'day') + 1) % weathers.length];
+                state.weather = nextW;
+                stage.setWeather(nextW);
+                audio.play('switch');
+                triggerHaptic('light');
+                vfx.addText(t('weather_' + nextW), LOGICAL_WIDTH / 2 - 60, 50, '#00f0ff');
+                saveState();
+                return;
+            }
+            if (hit.id === 'toy_duck') {
+                audio.play('squeak');
+                triggerHaptic('medium');
+                state.vitals.happiness = Math.min(100, state.vitals.happiness + 12);
+                state.vitals.stress = Math.max(0, state.vitals.stress - 15);
+                dogBuilder.triggerWobble(stage.currentDog, 0.55);
+                vfx.emit(pos.x, pos.y, 14, 'confetti');
+                vfx.addText('🦆 ¡SQUEAK! ❤️', LOGICAL_WIDTH / 2 - 60, LOGICAL_HEIGHT * 0.45, '#ffd700');
+                state.stats.toysPlayed = (state.stats.toysPlayed || 0) + 1;
+                saveState();
+                return;
+            }
+            if (hit.id === 'toy_frisbee') {
+                audio.play('toss');
+                triggerHaptic('medium');
+                state.vitals.happiness = Math.min(100, state.vitals.happiness + 18);
+                state.vitals.energy = Math.max(0, state.vitals.energy - 8);
+                state.vitals.stress = Math.max(0, state.vitals.stress - 20);
+                stage.tossBall();
+                dogBuilder.triggerWobble(stage.currentDog, 0.7);
+                vfx.emit(pos.x, pos.y, 16, 'spark');
+                vfx.addText('🥏 ¡FRISBEE! 🐾', LOGICAL_WIDTH / 2 - 60, LOGICAL_HEIGHT * 0.45, '#05ffa1');
+                state.stats.toysPlayed = (state.stats.toysPlayed || 0) + 1;
+                saveState();
+                return;
+            }
+            if (hit.id === 'park_action_sniff') {
+                audio.play('dig');
+                triggerHaptic('medium');
+                const reward = 5 + Math.floor(Math.random() * 15);
+                state.bones += reward;
+                minigameState.walkBonesFound = (minigameState.walkBonesFound || 0) + reward;
+                state.vitals.happiness = Math.min(100, state.vitals.happiness + 8);
+                state.vitals.stress = Math.max(0, state.vitals.stress - 10);
+                vfx.emit(pos.x, pos.y, 16, 'spark');
+                vfx.addText('+ ' + reward + ' 🦴 ' + t('bones_won'), LOGICAL_WIDTH / 2 - 60, LOGICAL_HEIGHT * 0.45, '#ffd700');
+                checkAchievement('park_explorer');
+                saveState();
+                return;
+            }
+            if (hit.id === 'park_action_greet') {
+                audio.play('bark');
+                triggerHaptic('success');
+                state.vitals.happiness = Math.min(100, state.vitals.happiness + 18);
+                state.vitals.discipline = Math.min(100, (state.vitals.discipline || 80) + 5);
+                vfx.emit(pos.x, pos.y, 20, 'heart');
+                vfx.addText('🐕 ' + t('bark_sound') + ' ❤️', LOGICAL_WIDTH / 2 - 50, LOGICAL_HEIGHT * 0.45, '#ff2a85');
+                state.stats.walksTaken = (state.stats.walksTaken || 0) + 1;
+                saveState();
+                return;
+            }
+
             if (hit.id === 'action_pet' || hit.id === 'pet_dog') {
                 state.vitals.happiness = Math.min(100, state.vitals.happiness + 15);
                 state.vitals.stress = Math.max(0, state.vitals.stress - 15);
@@ -6065,6 +6146,48 @@ function handleInteraction(pos) {
                 return;
             }
 
+            if (hit.id === 'invader_shoot') {
+                if (!minigameState.gameOver) {
+                    minigameState.playerBullets.push({
+                        x: minigameState.playerX,
+                        y: minigameState.playerY - 20,
+                        vy: -480,
+                        w: 8,
+                        h: 18
+                    });
+                    audio.play('laser');
+                    triggerHaptic('light');
+                }
+                return;
+            }
+            if (hit.id === 'flap_jump') {
+                if (!minigameState.gameOver) {
+                    minigameState.flapVelocity = -360;
+                    audio.play('flap');
+                    triggerHaptic('light');
+                }
+                return;
+            }
+            if (hit.id === 'drill_left') {
+                minigameState.drillCol = Math.max(0, minigameState.drillCol - 1);
+                audio.play('click');
+                return;
+            }
+            if (hit.id === 'drill_right') {
+                minigameState.drillCol = Math.min(4, minigameState.drillCol + 1);
+                audio.play('click');
+                return;
+            }
+            if (hit.id === 'drill_down') {
+                drillCurrentBlock();
+                return;
+            }
+            if (hit.id.startsWith('rhythm_lane_')) {
+                const lane = parseInt(hit.id.replace('rhythm_lane_', ''), 10);
+                hitRhythmTrack(lane);
+                return;
+            }
+
             if (hit.id.startsWith('filter_')) {
                 photoFilter = hit.id.replace('filter_', '');
                 return;
@@ -6094,6 +6217,10 @@ function handleInteraction(pos) {
             }
         } else if (minigameState.type === SCREENS.MG_JUMP) {
             minigameState.playerX = pos.x;
+        } else if (minigameState.type === SCREENS.MG_FLAP) {
+            minigameState.flapVelocity = -360;
+            audio.play('flap');
+            triggerHaptic('light');
         } else {
             if (pos.x < minigameState.playerX) {
                 minigameState.playerX = Math.max(35, minigameState.playerX - 55);
@@ -6109,6 +6236,11 @@ uiCanvas.addEventListener('pointerdown', (e) => {
     showTouchGlow(coords.screenX, coords.screenY);
     isDragging = true;
     lastDragX = coords.screenX;
+    if (minigameState.active && minigameState.type === SCREENS.MG_FLAP && !minigameState.gameOver) {
+        minigameState.flapVelocity = -360;
+        audio.play('flap');
+        triggerHaptic('light');
+    }
     handleInteraction(coords);
 }, { passive: false });
 
@@ -6151,6 +6283,54 @@ window.addEventListener('keydown', (e) => {
                 handleInteraction({ x: LOGICAL_WIDTH - 50, y: LOGICAL_HEIGHT - 110 });
                 return;
             }
+        }
+
+        if (minigameState.type === SCREENS.MG_INVADERS) {
+            if (e.key === ' ' || e.key === 'Enter') {
+                minigameState.playerBullets.push({
+                    x: minigameState.playerX,
+                    y: minigameState.playerY - 20,
+                    vy: -480,
+                    w: 8,
+                    h: 18
+                });
+                audio.play('laser');
+                triggerHaptic('light');
+                return;
+            }
+        }
+
+        if (minigameState.type === SCREENS.MG_FLAP) {
+            if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                minigameState.flapVelocity = -360;
+                audio.play('flap');
+                triggerHaptic('light');
+                return;
+            }
+        }
+
+        if (minigameState.type === SCREENS.MG_DIGGER) {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                minigameState.drillCol = Math.max(0, minigameState.drillCol - 1);
+                audio.play('click');
+                return;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                minigameState.drillCol = Math.min(4, minigameState.drillCol + 1);
+                audio.play('click');
+                return;
+            }
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S' || e.key === ' ') {
+                drillCurrentBlock();
+                return;
+            }
+        }
+
+        if (minigameState.type === SCREENS.MG_RHYTHM) {
+            if (e.key === '1' || e.key === 'd' || e.key === 'D') { hitRhythmTrack(0); return; }
+            if (e.key === '2' || e.key === 'f' || e.key === 'F') { hitRhythmTrack(1); return; }
+            if (e.key === '3' || e.key === 'j' || e.key === 'J') { hitRhythmTrack(2); return; }
+            if (e.key === '4' || e.key === 'k' || e.key === 'K') { hitRhythmTrack(3); return; }
         }
 
         if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -6279,8 +6459,13 @@ function mainGameLoop(timestamp) {
     else if (currentScreen === SCREENS.MG_LANE) updateMinigameLane(dt);
     else if (currentScreen === SCREENS.MG_GUESS) updateMinigameGuess(dt);
     else if (currentScreen === SCREENS.MG_BOUNCE) updateMinigameBounce(dt);
+    else if (currentScreen === SCREENS.MG_INVADERS) updateMinigameInvaders(dt);
+    else if (currentScreen === SCREENS.MG_FLAP) updateMinigameFlap(dt);
+    else if (currentScreen === SCREENS.MG_DIGGER) updateMinigameDigger(dt);
+    else if (currentScreen === SCREENS.MG_RHYTHM) updateMinigameRhythm(dt);
+    else if (currentScreen === SCREENS.PARK_WALK) updateParkWalk(dt);
 
-    if (stage.currentDog && !currentScreen.startsWith('MG_')) {
+    if (stage.currentDog && !currentScreen.startsWith('MG_') && currentScreen !== SCREENS.PARK_WALK) {
         let emotion = 'normal';
         if (state.vitals.lightsOff || state.vitals.energy < 25) emotion = 'sleepy';
         else if (state.vitals.happiness > 65) emotion = 'happy';
@@ -6310,7 +6495,14 @@ function mainGameLoop(timestamp) {
         case SCREENS.MG_LANE:
         case SCREENS.MG_GUESS:
         case SCREENS.MG_BOUNCE:
+        case SCREENS.MG_INVADERS:
+        case SCREENS.MG_FLAP:
+        case SCREENS.MG_DIGGER:
+        case SCREENS.MG_RHYTHM:
             drawActiveMinigameHUD(timeSec);
+            break;
+        case SCREENS.PARK_WALK:
+            drawParkWalkHUD(timeSec);
             break;
         case SCREENS.PHOTO_STUDIO:
             drawStudioHUD();

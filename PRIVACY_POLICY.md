@@ -36,4 +36,5 @@ Our Service does not collect personal information from anyone, including childre
 We may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for any changes. We will notify you of any changes by posting the new Privacy Policy on this page.
 
 ## 7. Contact Us
-If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact the
+If you have any questions, feedback, or suggestions about our Privacy Policy, please open an issue on our official GitHub repository:
+* [https://github.com/mwveliz/dodge-block-dogs/issues](https://github.com/mwveliz/dodge-block-dogs/issues)
