@@ -115,6 +115,7 @@
 
         /* Touch ripple */
         .touch-feedback {
+            display: none !important;
             pointer-events: none;
             position: absolute;
             width: 44px;
@@ -889,7 +890,9 @@ const I18N = {
         arcade_page_1: '◀ PÁG 1 (1-6)',
         arcade_page_2: 'PÁG 2 (7-10) ▶',
         tap_to_flap: '¡TOCA / ESPACIO PARA VOLAR!',
-        drill_btn: 'TALADRAR ⚡'
+        drill_btn: 'TALADRAR ⚡',
+        hungry_alert: '¡Tengo hambre! 🥩',
+        pee_cleaned: '¡Piso limpio! 💦'
     },
     en: {
         code: 'EN',
@@ -1026,7 +1029,9 @@ const I18N = {
         arcade_page_1: '◀ PAGE 1 (1-6)',
         arcade_page_2: 'PAGE 2 (7-10) ▶',
         tap_to_flap: 'TAP / SPACE TO FLAP!',
-        drill_btn: 'DRILL ⚡'
+        drill_btn: 'DRILL ⚡',
+        hungry_alert: 'I am hungry! 🥩',
+        pee_cleaned: 'Floor cleaned! 💦'
     },
     ja: {
         code: 'JA',
@@ -1163,7 +1168,9 @@ const I18N = {
         arcade_page_1: '◀ ページ1 (1-6)',
         arcade_page_2: 'ページ2 (7-10) ▶',
         tap_to_flap: 'タップ / スペースで飛ぶ！',
-        drill_btn: 'ドリル ⚡'
+        drill_btn: 'ドリル ⚡',
+        hungry_alert: 'お腹すいたワン！🥩',
+        pee_cleaned: '床がキレイに！💦'
     },
     pt: {
         code: 'PT',
@@ -1300,7 +1307,9 @@ const I18N = {
         arcade_page_1: '◀ PÁG 1 (1-6)',
         arcade_page_2: 'PÁG 2 (7-10) ▶',
         tap_to_flap: 'TOQUE / ESPAÇO PARA VOAR!',
-        drill_btn: 'BROCA ⚡'
+        drill_btn: 'BROCA ⚡',
+        hungry_alert: 'Estou com fome! 🥩',
+        pee_cleaned: 'Chão limpinho! 💦'
     }
 };
 
@@ -2036,6 +2045,7 @@ const defaultState = {
         health: 100,
         discipline: 80,
         poops: 0,
+        pees: 0,
         isSick: false,
         lightsOff: false,
         weightKg: 4.5,
@@ -4595,6 +4605,67 @@ function drawDashboardHUD(timeSec) {
         registerHitbox('clean_poop_' + i, pos.x - 20, pos.y - 28, 40, 36);
     }
 
+    // Floor Pee Puddles
+    const peesCount = state.vitals.pees || 0;
+    const peePositions = [
+        { x: LOGICAL_WIDTH * 0.68, y: LOGICAL_HEIGHT * 0.61 },
+        { x: LOGICAL_WIDTH * 0.18, y: LOGICAL_HEIGHT * 0.63 }
+    ];
+
+    for (let i = 0; i < Math.min(peesCount, 2); i++) {
+        const ppos = peePositions[i];
+        uictx.save();
+        uictx.fillStyle = 'rgba(236, 201, 75, 0.75)';
+        uictx.beginPath();
+        uictx.ellipse(ppos.x, ppos.y, 22, 10, 0, 0, Math.PI * 2);
+        uictx.fill();
+        uictx.strokeStyle = '#d69e2e';
+        uictx.lineWidth = 1.5;
+        uictx.stroke();
+
+        uictx.font = '16px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.fillText('💦', ppos.x + 8, ppos.y - 6);
+        uictx.restore();
+
+        registerHitbox('clean_pee_' + i, ppos.x - 24, ppos.y - 14, 48, 28);
+    }
+
+    // Hungry Speech Bubble when hunger < 30%
+    if (state.vitals.hunger < 30 && !state.vitals.lightsOff) {
+        const bubbleX = LOGICAL_WIDTH / 2;
+        const bubbleY = LOGICAL_HEIGHT * 0.30 + Math.sin(timeSec * 3) * 4;
+        const bubbleW = 155;
+        const bubbleH = 34;
+
+        uictx.save();
+        uictx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        uictx.beginPath();
+        uictx.roundRect(bubbleX - bubbleW / 2, bubbleY - bubbleH / 2, bubbleW, bubbleH, 8);
+        uictx.fill();
+        uictx.strokeStyle = '#ff4d6d';
+        uictx.lineWidth = 2;
+        uictx.stroke();
+
+        // Speech bubble triangle pointing down to dog
+        uictx.beginPath();
+        uictx.moveTo(bubbleX - 7, bubbleY + bubbleH / 2);
+        uictx.lineTo(bubbleX, bubbleY + bubbleH / 2 + 8);
+        uictx.lineTo(bubbleX + 7, bubbleY + bubbleH / 2);
+        uictx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        uictx.fill();
+        uictx.stroke();
+
+        uictx.fillStyle = '#1a202c';
+        uictx.font = 'bold 12px "Courier New", monospace';
+        uictx.textAlign = 'center';
+        uictx.textBaseline = 'middle';
+        uictx.fillText(t('hungry_alert'), bubbleX, bubbleY);
+        uictx.restore();
+
+        registerHitbox('goto_kitchen_hungry', bubbleX - bubbleW / 2, bubbleY - bubbleH / 2, bubbleW, bubbleH + 10);
+    }
+
     // Sickness skull alert above dog
     if (state.vitals.isSick) {
         const skullY = LOGICAL_HEIGHT * 0.34 + Math.sin(timeSec * 4) * 6;
@@ -4613,10 +4684,10 @@ function drawDashboardHUD(timeSec) {
         }
     }
 
-    // Nighttime Lights Off Overlay
+    // Nighttime Lights Off Overlay & Dream Bubble
     if (state.vitals.lightsOff) {
         uictx.fillStyle = 'rgba(6, 8, 22, 0.78)';
-        uictx.fillRect(0, 54, LOGICAL_WIDTH, LOGICAL_HEIGHT - 54);
+        uictx.fillRect(0, 58, LOGICAL_WIDTH, LOGICAL_HEIGHT - 58);
 
         uictx.font = '38px sans-serif';
         uictx.textAlign = 'center';
@@ -4626,6 +4697,35 @@ function drawDashboardHUD(timeSec) {
         uictx.fillStyle = 'rgba(0, 240, 255, 0.85)';
         uictx.font = 'bold 22px "Courier New", monospace';
         uictx.fillText('Zzz...', LOGICAL_WIDTH / 2 + 45, LOGICAL_HEIGHT * 0.44 - zOff);
+
+        // Funny Dream Cloud above the sleeping pup!
+        const dreamItems = ['🦴', '🥩', '🌭', '🐿️', '🏆', '🎾'];
+        const dreamItem = dreamItems[Math.floor(timeSec / 3) % dreamItems.length];
+        const dreamX = LOGICAL_WIDTH / 2 - 40;
+        const dreamY = LOGICAL_HEIGHT * 0.32 + Math.sin(timeSec * 2) * 5;
+
+        uictx.save();
+        // Dream puffs
+        uictx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        uictx.beginPath();
+        uictx.arc(dreamX + 22, dreamY + 28, 4, 0, Math.PI * 2);
+        uictx.arc(dreamX + 12, dreamY + 18, 7, 0, Math.PI * 2);
+        uictx.fill();
+
+        // Dream bubble
+        uictx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+        uictx.beginPath();
+        uictx.ellipse(dreamX, dreamY, 34, 22, 0, 0, Math.PI * 2);
+        uictx.fill();
+        uictx.strokeStyle = '#00f0ff';
+        uictx.lineWidth = 1.5;
+        uictx.stroke();
+
+        uictx.font = '24px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.textBaseline = 'middle';
+        uictx.fillText(dreamItem, dreamX, dreamY);
+        uictx.restore();
     }
 
     // Interactive Pet hitbox on dog body
@@ -6113,14 +6213,8 @@ function getCanvasCoordinates(e) {
     };
 }
 
-const touchFeedback = document.getElementById('touchFeedback');
-function showTouchGlow(clientX, clientY) {
-    if (!touchFeedback) return;
-    touchFeedback.style.left = clientX + 'px';
-    touchFeedback.style.top = clientY + 'px';
-    touchFeedback.classList.remove('active');
-    void touchFeedback.offsetWidth;
-    touchFeedback.classList.add('active');
+function showTouchGlow() {
+    // Disabled per user request (removed offset blue touch circle)
 }
 
 let isDragging = false;
@@ -6311,8 +6405,9 @@ function handleInteraction(pos) {
                 return;
             }
 
-            if (hit.id === 'action_clean' || hit.id.startsWith('clean_poop_')) {
+            if (hit.id === 'action_clean' || hit.id.startsWith('clean_poop_') || hit.id.startsWith('clean_pee_')) {
                 state.vitals.poops = 0;
+                state.vitals.pees = 0;
                 state.vitals.hygiene = 100;
                 state.vitals.happiness = Math.min(100, state.vitals.happiness + 10);
                 audio.play('flush');
@@ -6321,6 +6416,14 @@ function handleInteraction(pos) {
                 vfx.addText(t('clean_done'), LOGICAL_WIDTH / 2 - 70, LOGICAL_HEIGHT * 0.45, '#00f0ff');
                 checkAchievement('clean_freak');
                 saveState();
+                return;
+            }
+
+            if (hit.id === 'goto_kitchen_hungry') {
+                currentScreen = SCREENS.KITCHEN;
+                stage.setScreen(currentScreen);
+                audio.play('click');
+                triggerHaptic('light');
                 return;
             }
 
@@ -6776,10 +6879,31 @@ function updateVitals(dt) {
             audio.play('bark');
         }
 
-        // Hygiene decay based on poops
+        // Random peeing when active and hydrated
+        if (state.vitals.hunger < 90 && !state.vitals.lightsOff && Math.random() < 0.0022 * dt * 60 && (state.vitals.pees || 0) < 2) {
+            state.vitals.pees = (state.vitals.pees || 0) + 1;
+            audio.play('squeak');
+            triggerHaptic('light');
+            vfx.addText('💦 ¡Piss!', LOGICAL_WIDTH * 0.68, LOGICAL_HEIGHT * 0.60, '#ecc94b');
+        }
+
+        // Hungry barking alert when hunger < 30%
+        if (state.vitals.hunger < 30 && !state.vitals.lightsOff) {
+            state.vitals.hungryBarkTimer = (state.vitals.hungryBarkTimer || 0) - dt;
+            if (state.vitals.hungryBarkTimer <= 0) {
+                state.vitals.hungryBarkTimer = 14 + Math.random() * 6;
+                audio.play('bark');
+                triggerHaptic('medium');
+                vfx.addText('🥩 ¡WOOF! 🐶', LOGICAL_WIDTH / 2 - 35, LOGICAL_HEIGHT * 0.38, '#ff4d6d');
+            }
+        }
+
+        // Hygiene decay based on poops and pees
         const poops = state.vitals.poops || 0;
-        if (poops > 0) {
-            state.vitals.hygiene = Math.max(0, (state.vitals.hygiene || 100) - 0.6 * dt * poops);
+        const pees = state.vitals.pees || 0;
+        const totalWaste = poops + pees * 0.5;
+        if (totalWaste > 0) {
+            state.vitals.hygiene = Math.max(0, (state.vitals.hygiene || 100) - 0.55 * dt * totalWaste);
             if (state.vitals.hygiene < 15 && Math.random() < 0.005) {
                 state.vitals.isSick = true;
             }

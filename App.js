@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, SafeAreaView, Platform, StatusBar as RNStatusBar } from 'react-native';
+import { StyleSheet, View, SafeAreaView, Platform, StatusBar as RNStatusBar, Image } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import { StatusBar } from 'expo-status-bar';
@@ -42,8 +42,17 @@ export default function App() {
   };
 
   if (!htmlUri) {
-    // Show empty view with background color while loading
-    return <View style={styles.safeContainer} />;
+    // Show splash screen with background color while loading
+    return (
+      <View style={styles.splashContainer}>
+        <StatusBar style="light" backgroundColor="#0a0c16" translucent={false} />
+        <Image
+          source={require('./assets/splash.png')}
+          style={styles.splashImage}
+          resizeMode="contain"
+        />
+      </View>
+    );
   }
 
   return (
@@ -81,6 +90,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0c16',
+  },
+  splashContainer: {
+    flex: 1,
+    backgroundColor: '#0a0c16',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splashImage: {
+    width: '70%',
+    height: '70%',
   },
   webview: {
     flex: 1,
