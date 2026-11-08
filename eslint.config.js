@@ -5,6 +5,21 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    files: ['src/game/**/*.js'],
+    languageOptions: {
+      globals: {
+        THREE: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        performance: 'readonly',
+        requestAnimationFrame: 'readonly',
+        setTimeout: 'readonly',
+        localStorage: 'readonly',
+      },
+    },
+  },
+  {
+    ignores: ['dist/*', 'assets/*.js', 'assets/three.min.js', '**/*.min.js'],
   },
 ]);

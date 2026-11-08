@@ -4,6 +4,8 @@ import { WebView } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import { StatusBar } from 'expo-status-bar';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import * as Haptics from 'expo-haptics';
 
 export default function App() {
@@ -18,10 +20,12 @@ export default function App() {
     loadHtml();
   }, []);
 
-  const handleMessage = (event) => {
+  const handleMessage = async (event) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'HAPTIC') {
+      if (data.type === 'SAVE_STATE' && data.state) {
+        await AsyncStorage.setItem('DBD_PERSISTENT_BACKUP', JSON.stringify(data.state));
+      } else if (data.type === 'HAPTIC') {
         if (data.style === 'heavy') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         } else if (data.style === 'medium') {

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dodge Block Dogs (DBD) - Deluxe 3D</title>
+    <style>
+        :root {
+            --bg-color: #0a0c16;
+            --accent-cyan: #00f0ff;
+            --accent-gold: #ffcc00;
+            --accent-pink: #ff2a85;
+            --accent-green: #05ffa1;
+            --accent-purple: #9d4edd;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 30%, #161b33 0%, #080a12 85%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 480px;
+            max-height: 860px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 60px rgba(0, 240, 255, 0.18), 0 25px 50px rgba(0,0,0,0.85);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #0d0f1a;
+        }
+
+        #threeCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 1;
+        }
+
+        #uiCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: pixelated;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        /* Retro CRT scanlines */
+        .scanlines {
+            pointer-events: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(
+                rgba(18, 16, 38, 0) 50%, 
+                rgba(0, 0, 0, 0.22) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 5;
+            opacity: 0.3;
+        }
+
+        /* Dynamic vignette glow for Near-Miss, Fever, and Impact */
+        #vignetteOverlay {
+            pointer-events: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            box-shadow: inset 0 0 90px rgba(0, 240, 255, 0);
+            transition: box-shadow 0.15s ease-out, background 0.15s ease-out;
+            z-index: 4;
+        }
+        #vignetteOverlay.near-miss {
+            box-shadow: inset 0 0 110px rgba(0, 240, 255, 0.65);
+        }
+        #vignetteOverlay.fever {
+            box-shadow: inset 0 0 120px rgba(255, 204, 0, 0.7);
+            background: rgba(255, 204, 0, 0.05);
+        }
+        #vignetteOverlay.hit {
+            box-shadow: inset 0 0 120px rgba(255, 42, 133, 0.85);
+            background: rgba(255, 42, 133, 0.15);
+        }
+
+        /* Touch ripple */
+        .touch-feedback {
+            pointer-events: none;
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-cyan);
+            transform: translate(-50%, -50%) scale(0.4);
+            opacity: 0;
+            transition: transform 0.25s cubic-bezier(0.1, 0.8, 0.3, 1), opacity 0.25s ease-out;
+            z-index: 10;
+        }
+        .touch-feedback.active {
+            transform: translate(-50%, -50%) scale(1.6);
+            opacity: 0.9;
+        }
+    </style>
+    <script>
+    /* THREE_JS_INLINE */
+    </script>
+</head>
+<body>
+    <div id="game-wrapper">
+        <canvas id="threeCanvas"></canvas>
+        <canvas id="uiCanvas"></canvas>
+        <div id="vignetteOverlay"></div>
+        <div class="scanlines"></div>
+        <div id="touchFeedback" class="touch-feedback"></div>
+    </div>
+
+    <script>
+    /* GAME_JS_INLINE */
+    </script>
+</body>
+</html>
