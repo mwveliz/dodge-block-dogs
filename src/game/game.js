@@ -1197,19 +1197,19 @@ function getAchDesc(ach) {
 const DOG_BREEDS = [
     {
         id: 'dachshund',
-        name: 'Salchi (Dachshund)',
-        shortName: 'Salchi',
+        name: 'Domi (Dachshund)',
+        shortName: 'Domi',
         names: {
-            es: 'Salchi (Dachshund)',
-            en: 'Salchi (Dachshund)',
-            ja: 'サルチ (ダックスフント)',
-            pt: 'Salchi (Teckel)'
+            es: 'Domi (Dachshund)',
+            en: 'Domi (Dachshund)',
+            ja: 'ドミ (ダックスフント)',
+            pt: 'Domi (Teckel)'
         },
         shortNames: {
-            es: 'Salchi',
-            en: 'Salchi',
-            ja: 'サルチ',
-            pt: 'Salchi'
+            es: 'Domi',
+            en: 'Domi',
+            ja: 'ドミ',
+            pt: 'Domi'
         },
         desc: 'Cuerpo largo, orejas caídas y gran corazón.',
         descs: {
@@ -1240,19 +1240,19 @@ const DOG_BREEDS = [
     },
     {
         id: 'jackrussell',
-        name: 'Jacky (Jack Russell)',
-        shortName: 'Jacky',
+        name: 'LEIA (Jack Russell)',
+        shortName: 'LEIA',
         names: {
-            es: 'Jacky (Jack Russell)',
-            en: 'Jacky (Jack Russell)',
-            ja: 'ジャッキー (ジャックラッセル)',
-            pt: 'Jacky (Jack Russell)'
+            es: 'LEIA (Jack Russell)',
+            en: 'LEIA (Jack Russell)',
+            ja: 'レイア (ジャックラッセル)',
+            pt: 'LEIA (Jack Russell)'
         },
         shortNames: {
-            es: 'Jacky',
-            en: 'Jacky',
-            ja: 'ジャッキー',
-            pt: 'Jacky'
+            es: 'LEIA',
+            en: 'LEIA',
+            ja: 'レイア',
+            pt: 'LEIA'
         },
         desc: 'Ágil, hiperactivo y lleno de energía.',
         descs: {

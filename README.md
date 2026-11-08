@@ -67,10 +67,11 @@ graph LR
 
 | Breed | Name (ES / EN) | Profile & Personality | Special Traits |
 |---|---|---|---|
-| **Golden Retriever** | **Buster** | Loyal, sunny, family companion | Balanced speed, high cuddle factor |
-| **Corgi** | **Pixel** | Energetic, short-legged speedster | High agility, joyful wiggles |
-| **Siberian Husky** | **Shadow** | Arctic runner with piercing blue eyes | High speed, wild spirit |
-| **Great Dane Puppy** | **Mora / Little Blackberry** | Slender, noble black baby Great Dane | Long elegant legs, gentle giant soul |
+| **Dachshund (Teckel)** | **Domi** | Cuerpo largo, orejas caídas y gran corazón | Especialista en túneles de sofá, sigilo absoluto |
+| **Jack Russell** | **LEIA** | Ágil, hiperactiva y motor a propulsión | Salto triple (3x), energía inagotable tras pelotas |
+| **Great Dane Puppy** | **Mora / Little Blackberry** | Esbelta, elegante cachorrita negra azabache | Patas largas de terciopelo, alma noble y protectora |
+| **Carlino Pug** | **Puggy** | Chaparrito, arrugado y experto en siestas | Catedrático del ronquido melódico, suspiros profundos |
+| **Shiba Inu** | **Doge** | Mítico, sonriente y emperador de los memes | Much wow, so doge, dramático a la hora del baño |
 
 ---
 
