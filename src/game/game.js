@@ -3049,9 +3049,9 @@ function startMinigame(type) {
     minigameState.playerVy = 0;
 
     if (type === SCREENS.MG_DODGE) {
-        minigameState.speed = 220;
+        minigameState.speed = 110;
     } else if (type === SCREENS.MG_CATCH) {
-        minigameState.speed = 210;
+        minigameState.speed = 120;
     } else if (type === SCREENS.MG_JUMP) {
         minigameState.playerY = LOGICAL_HEIGHT - 120;
         minigameState.playerVy = -540;
@@ -3068,7 +3068,7 @@ function startMinigame(type) {
         }
     } else if (type === SCREENS.MG_LANE) {
         minigameState.laneIndex = 1;
-        minigameState.speed = 280;
+        minigameState.speed = 150;
     } else if (type === SCREENS.MG_GUESS) {
         minigameState.guessRound = 1;
         minigameState.guessWins = 0;
@@ -3080,8 +3080,8 @@ function startMinigame(type) {
     } else if (type === SCREENS.MG_BOUNCE) {
         minigameState.ballX = LOGICAL_WIDTH / 2;
         minigameState.ballY = 160;
-        minigameState.ballVx = (Math.random() > 0.5 ? 1 : -1) * (150 + Math.random() * 40);
-        minigameState.ballVy = 220;
+        minigameState.ballVx = (Math.random() > 0.5 ? 1 : -1) * (110 + Math.random() * 30);
+        minigameState.ballVy = 150;
         minigameState.ballRadius = 14;
         minigameState.bounces = 0;
         minigameState.lives = 3;
@@ -3253,9 +3253,9 @@ function updateMinigameDodge(dt) {
         }
     }
 
-    minigameState.speed += 9 * effectiveDt;
+    minigameState.speed += 8.5 * effectiveDt;
 
-    if (Math.random() < 0.05 + (minigameState.speed * 0.00018)) {
+    if (Math.random() < 0.032 + (minigameState.speed * 0.00015)) {
         const roll = Math.random();
         let isPowerup = false;
         let pType = 'hazard';
@@ -3424,7 +3424,7 @@ function updateMinigameCatch(dt) {
             type: itemType,
             color,
             pts,
-            speed: 190 + Math.random() * 95,
+            speed: 100 + Math.min(180, minigameState.score * 3.5) + Math.random() * 40,
             rot: 0
         });
     }
@@ -3552,7 +3552,7 @@ function updateMinigameJump(dt) {
 function updateMinigameLane(dt) {
     if (minigameState.gameOver) return;
 
-    minigameState.speed += 14 * dt;
+    minigameState.speed += 8.5 * dt;
     const laneXs = [LOGICAL_WIDTH * 0.22, LOGICAL_WIDTH * 0.5, LOGICAL_WIDTH * 0.78];
     const targetX = laneXs[minigameState.laneIndex];
 
@@ -3689,8 +3689,8 @@ function updateMinigameBounce(dt) {
 
         // Head bounce!
         const hitOffset = (minigameState.ballX - minigameState.playerX) / (paddleW / 2);
-        minigameState.ballVy = -(380 + Math.min(200, minigameState.bounces * 8));
-        minigameState.ballVx = hitOffset * 240;
+        minigameState.ballVy = -(290 + Math.min(220, minigameState.bounces * 12));
+        minigameState.ballVx = hitOffset * 220;
 
         minigameState.bounces = (minigameState.bounces || 0) + 1;
         const pts = 25 * minigameState.multiplier;
@@ -3965,7 +3965,8 @@ function updateMinigameFlap(dt) {
 
     for (let i = minigameState.flapPipes.length - 1; i >= 0; i--) {
         const p = minigameState.flapPipes[i];
-        p.x -= 160 * effectiveDt;
+        const pipeSpeed = 120 + Math.min(90, (minigameState.flapScore || 0) * 8);
+        p.x -= pipeSpeed * effectiveDt;
 
         if (!p.passed && p.x + p.w < minigameState.playerX) {
             p.passed = true;
@@ -4208,6 +4209,12 @@ function updateParkWalk(dt) {
     if (minigameState.parkTimer > 0) {
         minigameState.parkTimer -= dt;
     }
+    if (minigameState.sniffTimer > 0) {
+        minigameState.sniffTimer -= dt;
+    }
+    if (minigameState.greetTimer > 0) {
+        minigameState.greetTimer -= dt;
+    }
 }
 
 // --- 11. 2D HUD / CANVAS OVERLAY RENDERER ---
@@ -4320,53 +4327,53 @@ function drawDashboardHUD(timeSec) {
     const pet = DOG_BREEDS[state.activePetIndex];
 
     uictx.fillStyle = 'rgba(15, 17, 30, 0.9)';
-    uictx.fillRect(0, 0, LOGICAL_WIDTH, 54);
+    uictx.fillRect(0, 0, LOGICAL_WIDTH, 58);
     uictx.strokeStyle = '#232946';
     uictx.lineWidth = 2;
-    uictx.strokeRect(0, 0, LOGICAL_WIDTH, 54);
+    uictx.strokeRect(0, 0, LOGICAL_WIDTH, 58);
 
     uictx.fillStyle = '#ffd700';
     uictx.font = 'bold 15px "Courier New", monospace';
     uictx.textAlign = 'left';
-    uictx.fillText('🦴 ' + state.bones, 8, 33);
+    uictx.fillText('🦴 ' + state.bones, 8, 35);
 
-    drawPixelButton(72, 10, 24, 34, '◀', '#1f2438');
-    registerHitbox('prev_pet', 72, 10, 24, 34);
+    drawPixelButton(72, 12, 24, 34, '◀', '#1f2438');
+    registerHitbox('prev_pet', 72, 12, 24, 34);
 
     uictx.fillStyle = '#ffffff';
     uictx.font = 'bold 12px "Courier New", monospace';
     uictx.textAlign = 'center';
-    uictx.fillText(getDogShortName(pet), 120, 33);
+    uictx.fillText(getDogShortName(pet), 120, 35);
 
-    drawPixelButton(146, 10, 24, 34, '▶', '#1f2438');
-    registerHitbox('next_pet', 146, 10, 24, 34);
+    drawPixelButton(146, 12, 24, 34, '▶', '#1f2438');
+    registerHitbox('next_pet', 146, 12, 24, 34);
 
     const langObj = I18N[state.lang || 'es'] || I18N.es;
-    drawPixelButton(174, 10, 48, 34, '🌐 ' + langObj.code, '#1f2438');
-    registerHitbox('toggle_lang', 174, 10, 48, 34);
+    drawPixelButton(174, 12, 48, 34, '🌐 ' + langObj.code, '#1f2438');
+    registerHitbox('toggle_lang', 174, 12, 48, 34);
 
     const lcdLabel = state.vitals.lcdMode ? t('tamagotchi_3d') : t('tamagotchi_lcd');
-    drawPixelButton(226, 10, 50, 34, lcdLabel, state.vitals.lcdMode ? '#48bb78' : '#1f2438', state.vitals.lcdMode);
-    registerHitbox('toggle_lcd', 226, 10, 50, 34);
+    drawPixelButton(226, 12, 50, 34, lcdLabel, state.vitals.lcdMode ? '#48bb78' : '#1f2438', state.vitals.lcdMode);
+    registerHitbox('toggle_lcd', 226, 12, 50, 34);
 
-    drawPixelButton(280, 10, 32, 34, '📖', '#d69e2e');
-    registerHitbox('goto_diary', 280, 10, 32, 34);
+    drawPixelButton(280, 12, 32, 34, '📖', '#d69e2e');
+    registerHitbox('goto_diary', 280, 12, 32, 34);
 
-    drawPixelButton(316, 10, 32, 34, '📸', '#805ad5');
-    registerHitbox('goto_studio', 316, 10, 32, 34);
+    drawPixelButton(316, 12, 32, 34, '📸', '#805ad5');
+    registerHitbox('goto_studio', 316, 12, 32, 34);
 
     const weatherIcons = { day: '☀️', sunset: '🌇', night: '🌙', rain: '🌧️' };
     const curWeather = state.vitals.weather || 'day';
-    drawPixelButton(352, 10, 32, 34, weatherIcons[curWeather] || '☀️', '#1f2438');
-    registerHitbox('toggle_weather', 352, 10, 32, 34);
+    drawPixelButton(352, 12, 32, 34, weatherIcons[curWeather] || '☀️', '#1f2438');
+    registerHitbox('toggle_weather', 352, 12, 32, 34);
 
     const soundText = audio.muted ? '🔇' : '🔊';
-    drawPixelButton(LOGICAL_WIDTH - 32, 10, 28, 34, soundText, '#1f2438');
-    registerHitbox('toggle_sound', LOGICAL_WIDTH - 32, 10, 28, 34);
+    drawPixelButton(LOGICAL_WIDTH - 32, 12, 28, 34, soundText, '#1f2438');
+    registerHitbox('toggle_sound', LOGICAL_WIDTH - 32, 12, 28, 34);
 
     // Left Column: Vitals Bars
     const vx = 14;
-    const vy = 64;
+    const vy = 68;
     const vw = 186;
     drawVitalsBar(vx, vy, vw, 8, t('hunger'), state.vitals.hunger, 100, '#e53e3e', '🥩');
     drawVitalsBar(vx, vy + 24, vw, 8, t('happiness'), state.vitals.happiness, 100, '#ecc94b', '💖');
@@ -4375,7 +4382,7 @@ function drawDashboardHUD(timeSec) {
 
     // Right Column: Tamagotchi Bio Card
     const cx = 210;
-    const cy = 60;
+    const cy = 66;
     const cw = 196;
     const ch = 92;
     uictx.fillStyle = 'rgba(18, 22, 38, 0.85)';
@@ -5577,6 +5584,9 @@ function drawParkWalkHUD(timeSec) {
         dogBuilder.updateDogAnimation(stage.currentDog, 1 / 60, timeSec, 2.5, true, 'happy');
     }
 
+    // Animated pixel pet walking along the trail
+    drawParkWalkDog(uictx, timeSec);
+
     // Top Navigation & Stats Bar
     uictx.fillStyle = 'rgba(12, 14, 24, 0.88)';
     uictx.fillRect(0, 0, LOGICAL_WIDTH, 56);
@@ -5618,6 +5628,194 @@ function drawParkWalkHUD(timeSec) {
 
     drawPixelButton(16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46, t('back_home'), '#e53e3e');
     registerHitbox('goto_dashboard', 16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46);
+}
+
+function drawParkWalkDog(uictx, timeSec) {
+    const pet = DOG_BREEDS[state.activePetIndex] || DOG_BREEDS[0];
+    const hexColor = '#' + pet.bodyColor.toString(16).padStart(6, '0');
+    const earHex = '#' + pet.earColor.toString(16).padStart(6, '0');
+    const bellyHex = '#' + (pet.bellyColor ? pet.bellyColor.toString(16).padStart(6, '0') : hexColor);
+
+    const trailY = LOGICAL_HEIGHT * 0.65 + 35;
+    const dogX = LOGICAL_WIDTH * 0.38;
+    const dogY = trailY;
+
+    let bodyW = 42;
+    let bodyH = 22;
+    let legLen = 16;
+    if (pet.id === 'dachshund') {
+        bodyW = 54;
+        bodyH = 19;
+        legLen = 12;
+    } else if (pet.id === 'mora') {
+        bodyW = 46;
+        bodyH = 26;
+        legLen = 22;
+    } else if (pet.id === 'jackrussell') {
+        bodyW = 38;
+        bodyH = 21;
+        legLen = 15;
+    }
+
+    const isSniffing = (minigameState.sniffTimer || 0) > 0;
+    const isGreeting = (minigameState.greetTimer || 0) > 0;
+
+    const walkSpeed = isSniffing ? 4 : 11;
+    const legSwing = isSniffing ? 2 : Math.sin(timeSec * walkSpeed) * 8;
+    const bodyBob = isSniffing ? 1 : Math.abs(Math.sin(timeSec * walkSpeed)) * 2.5;
+    const headYOffset = isSniffing ? 10 : -bodyBob;
+
+    // Shadow on dirt trail
+    uictx.fillStyle = 'rgba(70, 30, 10, 0.4)';
+    uictx.beginPath();
+    uictx.ellipse(dogX, dogY + legLen + 2, bodyW * 0.55, 6, 0, 0, Math.PI * 2);
+    uictx.fill();
+
+    // Dust puffs behind back paws
+    if (!isSniffing) {
+        const dustPhase = (timeSec * 4) % 1;
+        uictx.fillStyle = `rgba(180, 110, 60, ${0.4 * (1 - dustPhase)})`;
+        uictx.beginPath();
+        uictx.arc(dogX - bodyW * 0.5 - 6, dogY + legLen - 2, 4 + dustPhase * 5, 0, Math.PI * 2);
+        uictx.fill();
+    }
+
+    // Back legs (shaded)
+    uictx.fillStyle = earHex;
+    uictx.fillRect(dogX - bodyW * 0.34 - legSwing * 0.7, dogY + bodyH * 0.2, 5, legLen);
+    uictx.fillRect(dogX + bodyW * 0.24 + legSwing * 0.7, dogY + bodyH * 0.2, 5, legLen);
+
+    // Body
+    uictx.fillStyle = hexColor;
+    uictx.fillRect(dogX - bodyW / 2, dogY - bodyH / 2 - bodyBob, bodyW, bodyH);
+    uictx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
+    uictx.lineWidth = 1.5;
+    uictx.strokeRect(dogX - bodyW / 2, dogY - bodyH / 2 - bodyBob, bodyW, bodyH);
+
+    // Belly patch
+    uictx.fillStyle = bellyHex;
+    uictx.fillRect(dogX - bodyW * 0.2, dogY + bodyH * 0.05 - bodyBob, bodyW * 0.4, bodyH * 0.4);
+
+    // Front legs
+    uictx.fillStyle = hexColor;
+    uictx.fillRect(dogX - bodyW * 0.26 + legSwing, dogY + bodyH * 0.25 - bodyBob, 6, legLen);
+    uictx.fillRect(dogX + bodyW * 0.32 - legSwing, dogY + bodyH * 0.25 - bodyBob, 6, legLen);
+
+    // Wagging Tail
+    uictx.strokeStyle = hexColor;
+    uictx.lineWidth = 4;
+    uictx.beginPath();
+    uictx.moveTo(dogX - bodyW / 2 + 2, dogY - bodyBob);
+    const tailWag = Math.sin(timeSec * 16) * 7;
+    uictx.lineTo(dogX - bodyW / 2 - 14, dogY - 14 - bodyBob + tailWag);
+    uictx.stroke();
+
+    // Head
+    const headX = dogX + bodyW / 2 - 2;
+    const headY = dogY - bodyH * 0.45 + headYOffset;
+    const headSize = pet.id === 'mora' ? 18 : 16;
+    uictx.fillStyle = hexColor;
+    uictx.fillRect(headX, headY, headSize, headSize);
+    uictx.strokeRect(headX, headY, headSize, headSize);
+
+    // Snout & Nose
+    uictx.fillStyle = hexColor;
+    uictx.fillRect(headX + headSize - 2, headY + 5, 8, 8);
+    uictx.fillStyle = '#111111';
+    uictx.fillRect(headX + headSize + 4, headY + 5, 3, 3);
+
+    // Eye
+    uictx.fillStyle = '#ffffff';
+    uictx.fillRect(headX + headSize - 7, headY + 3, 4, 4);
+    uictx.fillStyle = '#111111';
+    uictx.fillRect(headX + headSize - 6, headY + 4, 2, 2);
+
+    // Ears
+    uictx.fillStyle = earHex;
+    if (pet.earType === 'tall') {
+        uictx.beginPath();
+        uictx.moveTo(headX + 2, headY);
+        uictx.lineTo(headX + 6, headY - 12);
+        uictx.lineTo(headX + 11, headY);
+        uictx.fill();
+    } else {
+        uictx.fillRect(headX - 3, headY + 2, 6, 14);
+    }
+
+    // Collar
+    uictx.fillStyle = '#ff2a85';
+    uictx.fillRect(headX - 2, headY + headSize - 3, 5, 4);
+    uictx.fillStyle = '#ffd700';
+    uictx.beginPath();
+    uictx.arc(headX, headY + headSize + 2, 2.5, 0, Math.PI * 2);
+    uictx.fill();
+
+    // Sniffing effect
+    if (isSniffing) {
+        uictx.font = '16px sans-serif';
+        uictx.fillText('💨', headX + headSize + 14, headY + 12);
+        uictx.font = '20px sans-serif';
+        uictx.fillText('✨🦴', headX + 4, headY - 14);
+    }
+
+    // Greeting Companion Dog
+    if (isGreeting) {
+        const gx = LOGICAL_WIDTH * 0.64;
+        const gy = trailY;
+        const gBodyW = 38;
+        const gBodyH = 20;
+        const gLegLen = 15;
+
+        // Shadow
+        uictx.fillStyle = 'rgba(70, 30, 10, 0.4)';
+        uictx.beginPath();
+        uictx.ellipse(gx, gy + gLegLen + 2, gBodyW * 0.55, 6, 0, 0, Math.PI * 2);
+        uictx.fill();
+
+        // Companion Legs
+        uictx.fillStyle = '#c05621';
+        uictx.fillRect(gx - gBodyW * 0.28, gy + gBodyH * 0.2, 5, gLegLen);
+        uictx.fillRect(gx + gBodyW * 0.24, gy + gBodyH * 0.2, 5, gLegLen);
+
+        // Companion Body (golden pup facing left!)
+        uictx.fillStyle = '#ecc94b';
+        uictx.fillRect(gx - gBodyW / 2, gy - gBodyH / 2, gBodyW, gBodyH);
+        uictx.strokeStyle = '#d69e2e';
+        uictx.lineWidth = 1.5;
+        uictx.strokeRect(gx - gBodyW / 2, gy - gBodyH / 2, gBodyW, gBodyH);
+
+        // Companion Head (facing left toward player dog)
+        const gHeadX = gx - gBodyW / 2 - 12;
+        const gHeadY = gy - gBodyH * 0.5;
+        uictx.fillStyle = '#ecc94b';
+        uictx.fillRect(gHeadX, gHeadY, 15, 15);
+        // Snout
+        uictx.fillRect(gHeadX - 6, gHeadY + 5, 7, 7);
+        uictx.fillStyle = '#111111';
+        uictx.fillRect(gHeadX - 6, gHeadY + 5, 3, 3);
+        // Eye
+        uictx.fillStyle = '#ffffff';
+        uictx.fillRect(gHeadX + 5, gHeadY + 3, 4, 4);
+        uictx.fillStyle = '#111111';
+        uictx.fillRect(gHeadX + 5, gHeadY + 4, 2, 2);
+        // Floppy ear
+        uictx.fillStyle = '#c05621';
+        uictx.fillRect(gHeadX + 11, gHeadY + 2, 5, 12);
+        // Tail
+        uictx.strokeStyle = '#ecc94b';
+        uictx.lineWidth = 4;
+        uictx.beginPath();
+        uictx.moveTo(gx + gBodyW / 2, gy);
+        uictx.lineTo(gx + gBodyW / 2 + 12, gy - 12 + Math.sin(timeSec * 16) * 6);
+        uictx.stroke();
+
+        // Hearts bobbing
+        const heartY = gy - 36 + Math.sin(timeSec * 7) * 5;
+        uictx.font = '22px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.fillText('💖', (dogX + gx) / 2, heartY);
+        uictx.fillText('🐾', (dogX + gx) / 2 + 14, heartY - 14);
+    }
 }
 
 // --- SCREEN: POLAROID PHOTO STUDIO ---
@@ -5909,6 +6107,7 @@ function handleInteraction(pos) {
             if (hit.id === 'park_action_sniff') {
                 audio.play('dig');
                 triggerHaptic('medium');
+                minigameState.sniffTimer = 2.0;
                 const reward = 5 + Math.floor(Math.random() * 15);
                 state.bones += reward;
                 minigameState.walkBonesFound = (minigameState.walkBonesFound || 0) + reward;
@@ -5923,6 +6122,7 @@ function handleInteraction(pos) {
             if (hit.id === 'park_action_greet') {
                 audio.play('bark');
                 triggerHaptic('success');
+                minigameState.greetTimer = 2.8;
                 state.vitals.happiness = Math.min(100, state.vitals.happiness + 18);
                 state.vitals.discipline = Math.min(100, (state.vitals.discipline || 80) + 5);
                 vfx.emit(pos.x, pos.y, 20, 'heart');
@@ -6383,8 +6583,13 @@ window.addEventListener('keydown', (e) => {
 });
 
 function handleResize() {
-    const availW = window.innerWidth;
-    const availH = window.innerHeight;
+    const style = window.getComputedStyle(document.body);
+    const padTop = parseFloat(style.paddingTop) || 0;
+    const padBottom = parseFloat(style.paddingBottom) || 0;
+    const padLeft = parseFloat(style.paddingLeft) || 0;
+    const padRight = parseFloat(style.paddingRight) || 0;
+    const availW = Math.max(200, window.innerWidth - padLeft - padRight);
+    const availH = Math.max(200, window.innerHeight - padTop - padBottom);
     const scale = Math.min(availW / LOGICAL_WIDTH, availH / LOGICAL_HEIGHT);
 
     uiCanvas.width = LOGICAL_WIDTH;

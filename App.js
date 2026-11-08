@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, SafeAreaView, Platform, StatusBar as RNStatusBar } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import { StatusBar } from 'expo-status-bar';
@@ -43,37 +43,44 @@ export default function App() {
 
   if (!htmlUri) {
     // Show empty view with background color while loading
-    return <View style={styles.container} />;
+    return <View style={styles.safeContainer} />;
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      <WebView
-        source={{ uri: htmlUri }}
-        style={styles.webview}
-        scrollEnabled={false}
-        bounces={false}
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        allowFileAccess={true}
-        allowFileAccessFromFileURLs={true}
-        allowUniversalAccessFromFileURLs={true}
-        originWhitelist={['*']}
-        mixedContentMode="always"
-        mediaPlaybackRequiresUserAction={false}
-        onMessage={handleMessage}
-      />
-    </View>
+    <SafeAreaView style={styles.safeContainer}>
+      <StatusBar style="light" backgroundColor="#0a0c16" translucent={false} />
+      <View style={styles.container}>
+        <WebView
+          source={{ uri: htmlUri }}
+          style={styles.webview}
+          scrollEnabled={false}
+          bounces={false}
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          allowFileAccess={true}
+          allowFileAccessFromFileURLs={true}
+          allowUniversalAccessFromFileURLs={true}
+          originWhitelist={['*']}
+          mixedContentMode="always"
+          mediaPlaybackRequiresUserAction={false}
+          onMessage={handleMessage}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: '#0a0c16',
+    paddingTop: Platform.OS === 'android' ? (RNStatusBar.currentHeight || 28) : 0,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a', // Matches the HTML background color
+    backgroundColor: '#0a0c16',
   },
   webview: {
     flex: 1,
