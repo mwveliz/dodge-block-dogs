@@ -1422,11 +1422,107 @@ const ACHIEVEMENTS = [
         titles: { es: 'Modelo de Portada', en: 'Cover Model', ja: 'トップモデル', pt: 'Capa de Revista' },
         descs: { es: 'Toma una foto en el Estudio Polaroid', en: 'Snap a photo in the 3D Studio', ja: 'フォトスタジオで写真を撮影', pt: 'Tire uma foto no Estúdio 3D' },
         reward: 50, completed: false, current: 0, max: 1
+    },
+    {
+        id: 'clean_freak',
+        title: 'Hogar Impecable',
+        desc: 'Baña a tu cachorro y limpia sus necesidades',
+        titles: { es: 'Hogar Impecable', en: 'Squeaky Clean', ja: 'ピカピカ名人', pt: 'Casa Impecável' },
+        descs: { es: 'Baña a tu cachorro y limpia sus necesidades', en: 'Bathe your puppy and clean up after him', ja: 'こいぬをお風呂に入れておそうじしよう', pt: 'Dê banho no filhote e limpe suas necessidades' },
+        reward: 60, completed: false, current: 0, max: 1
+    },
+    {
+        id: 'gourmet_chef',
+        title: 'Chef Estrella',
+        desc: 'Alimenta a tu cachorro con comida gourmet',
+        titles: { es: 'Chef Estrella', en: 'Master Chef', ja: '星つきシェフ', pt: 'Chef Estrela' },
+        descs: { es: 'Alimenta a tu cachorro con comida gourmet', en: 'Feed your puppy a gourmet treat', ja: 'こいぬにごちそうを食べさせよう', pt: 'Alimente seu cãozinho com comida gourmet' },
+        reward: 70, completed: false, current: 0, max: 1
+    },
+    {
+        id: 'tamagotchi_master',
+        title: 'Vínculo Legendario',
+        desc: 'Gana una partida de Tamagotchi Guess',
+        titles: { es: 'Vínculo Legendario', en: 'Mind Reader', ja: '以心伝心', pt: 'Elo Lendário' },
+        descs: { es: 'Gana una partida de Tamagotchi Guess', en: 'Win a match in Tamagotchi Guess', ja: 'あっちむいてホイで勝利する', pt: 'Vença uma partida de Tamagotchi Guess' },
+        reward: 80, completed: false, current: 0, max: 1
+    },
+    {
+        id: 'juggle_champ',
+        title: 'Malabarista Pro',
+        desc: 'Rebota el hueso 15 veces en Bone Juggle',
+        titles: { es: 'Malabarista Pro', en: 'Master Juggler', ja: 'リフティング名人', pt: 'Malabarista Pro' },
+        descs: { es: 'Rebota el hueso 15 veces en Bone Juggle', en: 'Bounce the bone 15 times in Bone Juggle', ja: 'ボーンジャグリングで15回リフティング', pt: 'Rebata o osso 15 vezes no Bone Juggle' },
+        reward: 90, completed: false, current: 0, max: 15
+    }
+];
+
+// --- 4.1 TAMAGOTCHI FOOD MENU (ZERO MICROTRANSACTIONS) ---
+const FOOD_MENU = [
+    {
+        id: 'kibble',
+        name: 'food_kibble',
+        icon: '🥣',
+        price: 3,
+        hungerBonus: 20,
+        happinessBonus: 5,
+        energyBonus: 5,
+        healthBonus: 0,
+        stressRelief: 0,
+        weightGain: 0.05
+    },
+    {
+        id: 'steak',
+        name: 'food_steak',
+        icon: '🥩',
+        price: 8,
+        hungerBonus: 45,
+        happinessBonus: 15,
+        energyBonus: 10,
+        healthBonus: 5,
+        stressRelief: 10,
+        weightGain: 0.2
+    },
+    {
+        id: 'calcium_bone',
+        name: 'food_calcium',
+        icon: '🦴',
+        price: 12,
+        hungerBonus: 25,
+        happinessBonus: 35,
+        energyBonus: 15,
+        healthBonus: 15,
+        stressRelief: 15,
+        weightGain: 0.1
+    },
+    {
+        id: 'cupcake',
+        name: 'food_cupcake',
+        icon: '🧁',
+        price: 15,
+        hungerBonus: 15,
+        happinessBonus: 40,
+        energyBonus: 5,
+        healthBonus: 0,
+        stressRelief: 25,
+        weightGain: 0.35
+    },
+    {
+        id: 'warm_milk',
+        name: 'food_milk',
+        icon: '🥛',
+        price: 5,
+        hungerBonus: 15,
+        happinessBonus: 10,
+        energyBonus: 25,
+        healthBonus: 10,
+        stressRelief: 15,
+        weightGain: 0.05
     }
 ];
 
 // --- 5. PERSISTENT STATE MANAGEMENT ---
-const STORAGE_KEY = 'DODGE_BLOCK_DOGS_DELUXE_V3';
+const STORAGE_KEY = 'DODGE_BLOCK_DOGS_DELUXE_V4';
 
 const defaultState = {
     lang: (typeof navigator !== 'undefined' && navigator.language && navigator.language.startsWith('ja')) ? 'ja' :
@@ -1448,19 +1544,32 @@ const defaultState = {
         happiness: 90,
         energy: 95,
         stress: 15,
+        hygiene: 90,
+        health: 100,
+        discipline: 80,
+        poops: 0,
+        isSick: false,
+        lightsOff: false,
+        weightKg: 4.5,
+        ageDays: 1,
+        lcdMode: false,
         lastTick: Date.now()
     },
     highScores: {
         MG_DODGE: 0,
         MG_CATCH: 0,
         MG_JUMP: 0,
-        MG_LANE: 0
+        MG_LANE: 0,
+        MG_GUESS: 0,
+        MG_BOUNCE: 0
     },
     stats: {
         totalPets: 0,
         nearMisses: 0,
         feverCount: 0,
-        photosSnapped: 0
+        photosSnapped: 0,
+        poopsCleaned: 0,
+        mealsCooked: 0
     },
     achievements: {},
     soundEnabled: true
@@ -1473,7 +1582,11 @@ function loadSavedState() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
             const parsed = JSON.parse(raw);
-            return Object.assign({}, defaultState, parsed);
+            const merged = Object.assign({}, defaultState, parsed);
+            merged.vitals = Object.assign({}, defaultState.vitals, parsed.vitals || {});
+            merged.highScores = Object.assign({}, defaultState.highScores, parsed.highScores || {});
+            merged.stats = Object.assign({}, defaultState.stats, parsed.stats || {});
+            return merged;
         }
     } catch (e) {
         console.warn('Storage read error', e);
@@ -2448,7 +2561,23 @@ const minigameState = {
     playerVx: 0,
     playerVy: 0,
     entities: [],
-    laneIndex: 1
+    laneIndex: 1,
+
+    // Retro Tamagotchi Guess minigame
+    guessRound: 1,
+    guessWins: 0,
+    guessPetChoice: null,
+    guessUserChoice: null,
+    guessPhase: 'waiting',
+    guessTimer: 0,
+
+    // Retro Bone Juggle minigame
+    ballX: LOGICAL_WIDTH / 2,
+    ballY: 150,
+    ballVx: 170,
+    ballVy: 220,
+    ballRadius: 14,
+    bounces: 0
 };
 
 function startMinigame(type) {
@@ -2501,6 +2630,24 @@ function startMinigame(type) {
     } else if (type === SCREENS.MG_LANE) {
         minigameState.laneIndex = 1;
         minigameState.speed = 280;
+    } else if (type === SCREENS.MG_GUESS) {
+        minigameState.guessRound = 1;
+        minigameState.guessWins = 0;
+        minigameState.guessPetChoice = null;
+        minigameState.guessUserChoice = null;
+        minigameState.guessPhase = 'waiting';
+        minigameState.guessTimer = 0;
+        audio.play('tamagotchi_chirp');
+    } else if (type === SCREENS.MG_BOUNCE) {
+        minigameState.ballX = LOGICAL_WIDTH / 2;
+        minigameState.ballY = 160;
+        minigameState.ballVx = (Math.random() > 0.5 ? 1 : -1) * (150 + Math.random() * 40);
+        minigameState.ballVy = 220;
+        minigameState.ballRadius = 14;
+        minigameState.bounces = 0;
+        minigameState.lives = 3;
+        minigameState.playerX = LOGICAL_WIDTH / 2;
+        minigameState.playerY = LOGICAL_HEIGHT - 130;
     }
 
     currentScreen = type;
@@ -2571,10 +2718,17 @@ function endMinigame() {
 
     state.vitals.happiness = Math.min(100, state.vitals.happiness + 20);
     state.vitals.energy = Math.max(0, state.vitals.energy - 12);
+    state.vitals.weightKg = Math.max(2.0, Math.round(((state.vitals.weightKg || 4.5) - 0.15) * 10) / 10);
     saveState();
 
     if (minigameState.type === SCREENS.MG_DODGE && minigameState.score >= 50) {
         checkAchievement('century_dodge');
+    }
+    if (minigameState.type === SCREENS.MG_GUESS && minigameState.guessWins >= 3) {
+        checkAchievement('tamagotchi_master');
+    }
+    if (minigameState.type === SCREENS.MG_BOUNCE && minigameState.bounces >= 15) {
+        checkAchievement('juggle_champ');
     }
 }
 
@@ -2954,6 +3108,151 @@ function updateMinigameLane(dt) {
     }
 }
 
+function updateMinigameGuess(dt) {
+    if (minigameState.gameOver) return;
+
+    if (minigameState.guessPhase === 'revealed') {
+        minigameState.guessTimer -= dt;
+        if (minigameState.guessTimer <= 0) {
+            if (minigameState.guessRound >= 5) {
+                if (minigameState.guessWins >= 3) {
+                    audio.play('fanfare');
+                    checkAchievement('tamagotchi_master');
+                    state.vitals.happiness = Math.min(100, state.vitals.happiness + 25);
+                    state.vitals.stress = Math.max(0, state.vitals.stress - 20);
+                }
+                endMinigame();
+            } else {
+                minigameState.guessRound++;
+                minigameState.guessPhase = 'waiting';
+                minigameState.guessPetChoice = null;
+                minigameState.guessUserChoice = null;
+            }
+        }
+    }
+}
+
+function updateMinigameBounce(dt) {
+    if (minigameState.gameOver) return;
+
+    let effectiveDt = dt;
+    if (minigameState.slowMoActive) {
+        effectiveDt *= 0.45;
+        minigameState.slowMoTimer -= dt;
+        if (minigameState.slowMoTimer <= 0) minigameState.slowMoActive = false;
+    }
+
+    if (minigameState.isFever) {
+        minigameState.feverTimer -= dt;
+        if (minigameState.feverTimer <= 0) {
+            minigameState.isFever = false;
+            minigameState.comboGauge = 0;
+            minigameState.multiplier = 1;
+            audio.setTrack('arcade');
+        }
+    }
+
+    // Ball physics
+    minigameState.ballX += minigameState.ballVx * effectiveDt;
+    minigameState.ballY += minigameState.ballVy * effectiveDt;
+    minigameState.ballVy += 320 * effectiveDt; // Gravity
+
+    // Screen border bouncing
+    if (minigameState.ballX <= 25) {
+        minigameState.ballX = 25;
+        minigameState.ballVx = Math.abs(minigameState.ballVx);
+        audio.play('near_miss');
+    } else if (minigameState.ballX >= LOGICAL_WIDTH - 25) {
+        minigameState.ballX = LOGICAL_WIDTH - 25;
+        minigameState.ballVx = -Math.abs(minigameState.ballVx);
+        audio.play('near_miss');
+    }
+
+    // Ceiling
+    if (minigameState.ballY <= 65) {
+        minigameState.ballY = 65;
+        minigameState.ballVy = Math.abs(minigameState.ballVy);
+        audio.play('near_miss');
+    }
+
+    // Paddle collision (Dog head)
+    const paddleW = 90;
+    const paddleH = 26;
+    const paddleX = minigameState.playerX - paddleW / 2;
+    const paddleY = minigameState.playerY - 14;
+
+    if (minigameState.ballY + minigameState.ballRadius >= paddleY &&
+        minigameState.ballY - minigameState.ballRadius <= paddleY + paddleH &&
+        minigameState.ballX >= paddleX - 10 &&
+        minigameState.ballX <= paddleX + paddleW + 10 &&
+        minigameState.ballVy > 0) {
+
+        // Head bounce!
+        const hitOffset = (minigameState.ballX - minigameState.playerX) / (paddleW / 2);
+        minigameState.ballVy = -(380 + Math.min(200, minigameState.bounces * 8));
+        minigameState.ballVx = hitOffset * 240;
+
+        minigameState.bounces = (minigameState.bounces || 0) + 1;
+        const pts = 25 * minigameState.multiplier;
+        minigameState.score += pts;
+        addCombo(16);
+        audio.play('jump');
+        triggerHaptic('medium');
+        vfx.emit(minigameState.ballX, minigameState.ballY, 14, 'gold');
+        vfx.addText('+' + pts, minigameState.ballX - 15, minigameState.ballY - 24, '#05ffa1');
+
+        if (minigameState.bounces >= 15) {
+            checkAchievement('juggle_champ');
+        }
+
+        // Drop bonus treat occasionally
+        if (Math.random() < 0.35) {
+            minigameState.entities.push({
+                x: 30 + Math.random() * (LOGICAL_WIDTH - 60),
+                y: 70,
+                w: 28,
+                h: 28,
+                isBone: true,
+                color: '#ffd700'
+            });
+        }
+    }
+
+    // Falling bonus treats
+    for (let i = minigameState.entities.length - 1; i >= 0; i--) {
+        const e = minigameState.entities[i];
+        e.y += 180 * effectiveDt;
+        if (Math.abs(e.x - minigameState.playerX) < 45 && Math.abs(e.y - minigameState.playerY) < 35) {
+            audio.play('coin');
+            minigameState.score += 50 * minigameState.multiplier;
+            vfx.emit(e.x, e.y, 10, 'gold');
+            vfx.addText('+50 🦴', e.x, e.y - 15, '#ffd700');
+            minigameState.entities.splice(i, 1);
+            continue;
+        }
+        if (e.y > LOGICAL_HEIGHT + 30) {
+            minigameState.entities.splice(i, 1);
+        }
+    }
+
+    // Ball fell past bottom
+    if (minigameState.ballY > LOGICAL_HEIGHT + 20) {
+        minigameState.lives--;
+        audio.play('hit');
+        triggerHaptic('heavy');
+        minigameState.screenShake = 14;
+
+        if (minigameState.lives <= 0) {
+            endMinigame();
+        } else {
+            minigameState.ballX = LOGICAL_WIDTH / 2;
+            minigameState.ballY = 140;
+            minigameState.ballVx = (Math.random() > 0.5 ? 1 : -1) * (150 + Math.random() * 40);
+            minigameState.ballVy = 200;
+        }
+    }
+}
+
 // --- 11. 2D HUD / CANVAS OVERLAY RENDERER ---
 const uiCanvas = document.getElementById('uiCanvas');
 const uictx = uiCanvas.getContext('2d');
@@ -3029,70 +3328,267 @@ function drawDashboardHUD(timeSec) {
     uictx.strokeRect(0, 0, LOGICAL_WIDTH, 54);
 
     uictx.fillStyle = '#ffd700';
-    uictx.font = 'bold 16px "Courier New", monospace';
+    uictx.font = 'bold 15px "Courier New", monospace';
     uictx.textAlign = 'left';
-    uictx.fillText('🦴 ' + state.bones, 10, 34);
+    uictx.fillText('🦴 ' + state.bones, 8, 33);
 
-    drawPixelButton(78, 10, 26, 34, '◀', '#1f2438');
-    registerHitbox('prev_pet', 78, 10, 26, 34);
+    drawPixelButton(72, 10, 24, 34, '◀', '#1f2438');
+    registerHitbox('prev_pet', 72, 10, 24, 34);
 
     uictx.fillStyle = '#ffffff';
-    uictx.font = 'bold 13px "Courier New", monospace';
+    uictx.font = 'bold 12px "Courier New", monospace';
     uictx.textAlign = 'center';
-    uictx.fillText(getDogShortName(pet), 136, 33);
+    uictx.fillText(getDogShortName(pet), 120, 33);
 
-    drawPixelButton(168, 10, 26, 34, '▶', '#1f2438');
-    registerHitbox('next_pet', 168, 10, 26, 34);
+    drawPixelButton(146, 10, 24, 34, '▶', '#1f2438');
+    registerHitbox('next_pet', 146, 10, 24, 34);
 
     const langObj = I18N[state.lang || 'es'] || I18N.es;
-    drawPixelButton(204, 10, 56, 34, '🌐 ' + langObj.code, '#1f2438');
-    registerHitbox('toggle_lang', 204, 10, 56, 34);
+    drawPixelButton(174, 10, 48, 34, '🌐 ' + langObj.code, '#1f2438');
+    registerHitbox('toggle_lang', 174, 10, 48, 34);
 
-    drawPixelButton(268, 10, 36, 34, '📖', '#d69e2e');
-    registerHitbox('goto_diary', 268, 10, 36, 34);
+    const lcdLabel = state.vitals.lcdMode ? t('tamagotchi_3d') : t('tamagotchi_lcd');
+    drawPixelButton(226, 10, 54, 34, lcdLabel, state.vitals.lcdMode ? '#48bb78' : '#1f2438', state.vitals.lcdMode);
+    registerHitbox('toggle_lcd', 226, 10, 54, 34);
 
-    drawPixelButton(312, 10, 36, 34, '📸', '#805ad5');
-    registerHitbox('goto_studio', 312, 10, 36, 34);
+    drawPixelButton(284, 10, 32, 34, '📖', '#d69e2e');
+    registerHitbox('goto_diary', 284, 10, 32, 34);
+
+    drawPixelButton(320, 10, 32, 34, '📸', '#805ad5');
+    registerHitbox('goto_studio', 320, 10, 32, 34);
 
     const soundText = audio.muted ? '🔇' : '🔊';
-    drawPixelButton(LOGICAL_WIDTH - 48, 10, 36, 34, soundText, '#1f2438');
-    registerHitbox('toggle_sound', LOGICAL_WIDTH - 48, 10, 36, 34);
+    drawPixelButton(LOGICAL_WIDTH - 54, 10, 44, 34, soundText, '#1f2438');
+    registerHitbox('toggle_sound', LOGICAL_WIDTH - 54, 10, 44, 34);
 
-    const vx = 20;
-    const vy = 72;
-    const vw = 180;
-    drawVitalsBar(vx, vy, vw, 9, t('hunger'), state.vitals.hunger, 100, '#e53e3e', '🥩');
-    drawVitalsBar(vx, vy + 26, vw, 9, t('happiness'), state.vitals.happiness, 100, '#ecc94b', '💖');
-    drawVitalsBar(vx, vy + 52, vw, 9, t('energy'), state.vitals.energy, 100, '#38b2ac', '⚡');
-    drawVitalsBar(vx, vy + 78, vw, 9, t('stress'), 100 - state.vitals.stress, 100, '#9f7aea', '🧘');
+    // Left Column: Vitals Bars
+    const vx = 14;
+    const vy = 64;
+    const vw = 186;
+    drawVitalsBar(vx, vy, vw, 8, t('hunger'), state.vitals.hunger, 100, '#e53e3e', '🥩');
+    drawVitalsBar(vx, vy + 24, vw, 8, t('happiness'), state.vitals.happiness, 100, '#ecc94b', '💖');
+    drawVitalsBar(vx, vy + 48, vw, 8, t('energy'), state.vitals.energy, 100, '#38b2ac', '⚡');
+    drawVitalsBar(vx, vy + 72, vw, 8, t('hygiene'), state.vitals.hygiene || 100, 100, '#00f0ff', '🫧');
 
-    registerHitbox('pet_dog', LOGICAL_WIDTH / 2 - 70, LOGICAL_HEIGHT * 0.42, 140, 140);
+    // Right Column: Tamagotchi Bio Card
+    const cx = 210;
+    const cy = 60;
+    const cw = 196;
+    const ch = 92;
+    uictx.fillStyle = 'rgba(18, 22, 38, 0.85)';
+    uictx.fillRect(cx, cy, cw, ch);
+    uictx.strokeStyle = state.vitals.isSick ? '#ff0055' : '#2d3748';
+    uictx.lineWidth = state.vitals.isSick ? 2 : 1.5;
+    uictx.strokeRect(cx, cy, cw, ch);
 
-    uictx.fillStyle = 'rgba(10, 14, 26, 0.75)';
+    uictx.textAlign = 'left';
+    uictx.font = 'bold 11px "Courier New", monospace';
+    uictx.fillStyle = '#ffd700';
+    uictx.fillText('⚖️ ' + t('weight') + ': ' + (state.vitals.weightKg || 4.5).toFixed(1) + ' kg', cx + 10, cy + 20);
+
+    uictx.fillStyle = '#cbd5e0';
+    uictx.fillText('🎂 ' + t('age') + ': ' + (state.vitals.ageDays || 1) + ' ' + t('days'), cx + 10, cy + 40);
+
+    uictx.fillStyle = '#a0aec0';
+    uictx.fillText(t('stage') + ': ' + t('stage_puppy'), cx + 10, cy + 60);
+
+    if (state.vitals.isSick) {
+        const pulse = 0.6 + 0.4 * Math.sin(timeSec * 7);
+        uictx.fillStyle = `rgba(255, 0, 85, ${pulse})`;
+        uictx.font = 'bold 12px "Courier New", monospace';
+        uictx.fillText('💀 ¡ENFERMO!', cx + 10, cy + 80);
+    } else {
+        uictx.fillStyle = '#48bb78';
+        uictx.fillText('❤️ ' + t('health') + ': ' + Math.round(state.vitals.health || 100) + '%', cx + 10, cy + 80);
+    }
+
+    // Floor Poops & Buzzing Flies
+    const poopsCount = state.vitals.poops || 0;
+    const poopPositions = [
+        { x: LOGICAL_WIDTH * 0.22, y: LOGICAL_HEIGHT * 0.58 },
+        { x: LOGICAL_WIDTH * 0.74, y: LOGICAL_HEIGHT * 0.56 },
+        { x: LOGICAL_WIDTH * 0.32, y: LOGICAL_HEIGHT * 0.64 }
+    ];
+
+    for (let i = 0; i < Math.min(poopsCount, 3); i++) {
+        const pos = poopPositions[i];
+        uictx.font = '28px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.fillText('💩', pos.x, pos.y);
+
+        // Buzzing flies around poop
+        for (let f = 0; f < 2; f++) {
+            const flyAngle = timeSec * 8 + i * 2 + f * Math.PI;
+            const flyDist = 14 + f * 5;
+            const fx = pos.x + Math.cos(flyAngle) * flyDist;
+            const fy = pos.y - 12 + Math.sin(flyAngle) * (flyDist * 0.6);
+            uictx.fillStyle = '#1a202c';
+            uictx.beginPath();
+            uictx.arc(fx, fy, 2.5, 0, Math.PI * 2);
+            uictx.fill();
+        }
+
+        registerHitbox('clean_poop_' + i, pos.x - 20, pos.y - 28, 40, 36);
+    }
+
+    // Sickness skull alert above dog
+    if (state.vitals.isSick) {
+        const skullY = LOGICAL_HEIGHT * 0.34 + Math.sin(timeSec * 4) * 6;
+        uictx.font = '36px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.fillText('💀', LOGICAL_WIDTH / 2, skullY);
+    }
+
+    // Nighttime Lights Off Overlay
+    if (state.vitals.lightsOff) {
+        uictx.fillStyle = 'rgba(6, 8, 22, 0.78)';
+        uictx.fillRect(0, 54, LOGICAL_WIDTH, LOGICAL_HEIGHT - 54);
+
+        // Glowing Moon
+        uictx.font = '38px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.fillText('🌙', LOGICAL_WIDTH - 60, 110);
+
+        // Floating Zzz
+        const zOff = (timeSec * 35) % 80;
+        uictx.fillStyle = 'rgba(0, 240, 255, 0.85)';
+        uictx.font = 'bold 22px "Courier New", monospace';
+        uictx.fillText('Zzz...', LOGICAL_WIDTH / 2 + 45, LOGICAL_HEIGHT * 0.44 - zOff);
+    }
+
+    // Interactive Pet hitbox on dog body
+    registerHitbox('pet_dog', LOGICAL_WIDTH / 2 - 75, LOGICAL_HEIGHT * 0.38, 150, 150);
+
+    // Dog Nameplate
+    uictx.fillStyle = 'rgba(10, 14, 26, 0.78)';
     uictx.fillRect(LOGICAL_WIDTH / 2 - 110, LOGICAL_HEIGHT * 0.62, 220, 26);
+    uictx.strokeStyle = '#2d3748';
+    uictx.lineWidth = 1;
+    uictx.strokeRect(LOGICAL_WIDTH / 2 - 110, LOGICAL_HEIGHT * 0.62, 220, 26);
     uictx.fillStyle = '#00f0ff';
     uictx.font = 'bold 14px "Courier New", monospace';
     uictx.textAlign = 'center';
     uictx.fillText('★ ' + getDogName(pet) + ' ★', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.62 + 18);
 
-    const btnY = LOGICAL_HEIGHT - 170;
-    const btnW = 180;
-    const btnH = 46;
+    // Row 1: Care Action Buttons (Kitchen, Clean, Lights, Medicine)
+    const btnY1 = LOGICAL_HEIGHT - 172;
+    const btnH = 40;
 
-    drawPixelButton(20, btnY, btnW, btnH, t('feed'), '#c53030');
-    registerHitbox('action_feed', 20, btnY, btnW, btnH);
+    drawPixelButton(14, btnY1, 94, btnH, '🍖 ' + t('feed'), '#c53030');
+    registerHitbox('goto_kitchen', 14, btnY1, 94, btnH);
 
-    drawPixelButton(LOGICAL_WIDTH - 200, btnY, btnW, btnH, t('pet'), '#d53f8c');
-    registerHitbox('action_pet', LOGICAL_WIDTH - 200, btnY, btnW, btnH);
+    drawPixelButton(112, btnY1, 94, btnH, '🫧 ' + t('clean'), '#319795');
+    registerHitbox('action_clean', 112, btnY1, 94, btnH);
 
-    drawPixelButton(20, btnY + 56, btnW, btnH, t('rest'), '#3182ce');
-    registerHitbox('action_rest', 20, btnY + 56, btnW, btnH);
+    const lightLabel = state.vitals.lightsOff ? '☀️ ' + t('lights_on') : '💡 ' + t('lights_off');
+    drawPixelButton(210, btnY1, 94, btnH, lightLabel, state.vitals.lightsOff ? '#d69e2e' : '#2b6cb0');
+    registerHitbox('toggle_lights', 210, btnY1, 94, btnH);
 
-    drawPixelButton(LOGICAL_WIDTH - 200, btnY + 56, btnW, btnH, t('wardrobe'), '#805ad5');
-    registerHitbox('action_wardrobe', LOGICAL_WIDTH - 200, btnY + 56, btnW, btnH);
+    drawPixelButton(308, btnY1, 98, btnH, '💊 ' + t('medicine'), state.vitals.isSick ? '#e53e3e' : '#805ad5', state.vitals.isSick);
+    registerHitbox('action_medicine', 308, btnY1, 98, btnH);
 
-    drawPixelButton(20, LOGICAL_HEIGHT - 56, LOGICAL_WIDTH - 40, 46, t('arcade'), '#05ffa1', true);
-    registerHitbox('goto_minigames', 20, LOGICAL_HEIGHT - 56, LOGICAL_WIDTH - 40, 46);
+    // Row 2: Secondary Care Buttons (Pet, Praise, Wardrobe)
+    const btnY2 = LOGICAL_HEIGHT - 124;
+    drawPixelButton(14, btnY2, 124, btnH, '💖 ' + t('pet'), '#d53f8c');
+    registerHitbox('action_pet', 14, btnY2, 124, btnH);
+
+    drawPixelButton(144, btnY2, 124, btnH, '🎓 ' + t('praise'), '#4a5568');
+    registerHitbox('action_praise', 144, btnY2, 124, btnH);
+
+    drawPixelButton(274, btnY2, 132, btnH, '🧢 ' + t('wardrobe'), '#6b46c1');
+    registerHitbox('action_wardrobe', 274, btnY2, 132, btnH);
+
+    // Row 3: Master Arcade Button
+    const arcadeY = LOGICAL_HEIGHT - 74;
+    drawPixelButton(14, arcadeY, LOGICAL_WIDTH - 28, 54, '🕹️ ' + t('arcade') + ' ▶', '#05ffa1', true);
+    registerHitbox('goto_minigames', 14, arcadeY, LOGICAL_WIDTH - 28, 54);
+}
+
+// --- SCREEN: TAMAGOTCHI KITCHEN & PANTRY (ZERO MICROTRANSACTIONS) ---
+function drawKitchenHUD() {
+    uictx.fillStyle = 'rgba(12, 15, 26, 0.94)';
+    uictx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+    // Header
+    uictx.fillStyle = '#00f0ff';
+    uictx.font = 'bold 20px "Courier New", monospace';
+    uictx.textAlign = 'center';
+    uictx.fillText(t('kitchen_title'), LOGICAL_WIDTH / 2, 34);
+
+    // ZERO MICROTRANSACTIONS BANNER (Free-to-Play Guarantee)
+    uictx.fillStyle = 'rgba(5, 255, 161, 0.12)';
+    uictx.fillRect(16, 44, LOGICAL_WIDTH - 32, 28);
+    uictx.strokeStyle = '#05ffa1';
+    uictx.lineWidth = 1.5;
+    uictx.strokeRect(16, 44, LOGICAL_WIDTH - 32, 28);
+    uictx.fillStyle = '#05ffa1';
+    uictx.font = 'bold 11px "Courier New", monospace';
+    uictx.fillText(t('no_microtransactions'), LOGICAL_WIDTH / 2, 62);
+
+    // Status bar (Bones, Hunger, Weight)
+    uictx.fillStyle = '#ffd700';
+    uictx.font = 'bold 13px "Courier New", monospace';
+    uictx.textAlign = 'left';
+    uictx.fillText('🦴 ' + t('bones') + ': ' + state.bones, 20, 94);
+
+    uictx.textAlign = 'center';
+    uictx.fillStyle = '#e53e3e';
+    uictx.fillText('🥩 ' + t('hunger') + ': ' + Math.round(state.vitals.hunger) + '%', LOGICAL_WIDTH / 2, 94);
+
+    uictx.textAlign = 'right';
+    uictx.fillStyle = '#ecc94b';
+    uictx.fillText('⚖️ ' + t('weight') + ': ' + (state.vitals.weightKg || 4.5).toFixed(1) + ' kg', LOGICAL_WIDTH - 20, 94);
+
+    // Foods List
+    FOOD_MENU.forEach((food, idx) => {
+        const fy = 106 + idx * 88;
+        if (fy + 82 > LOGICAL_HEIGHT - 65) return;
+
+        const canAfford = state.bones >= food.price;
+        uictx.fillStyle = '#14182a';
+        uictx.fillRect(16, fy, LOGICAL_WIDTH - 32, 80);
+        uictx.strokeStyle = canAfford ? '#2d3748' : '#742a2a';
+        uictx.lineWidth = 1.5;
+        uictx.strokeRect(16, fy, LOGICAL_WIDTH - 32, 80);
+
+        // Icon
+        uictx.font = '32px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.fillText(food.icon, 45, fy + 52);
+
+        // Name
+        uictx.fillStyle = '#ffffff';
+        uictx.font = 'bold 14px "Courier New", monospace';
+        uictx.textAlign = 'left';
+        uictx.fillText(t(food.name), 76, fy + 24);
+
+        // Nutrition effects
+        uictx.fillStyle = '#a0aec0';
+        uictx.font = '11px "Courier New", monospace';
+        const effects = `+${food.hungerBonus}% ${t('hunger')} | +${food.happinessBonus}% ${t('happiness')} | +${food.weightGain}kg`;
+        uictx.fillText(effects, 76, fy + 44);
+
+        const healthEff = food.healthBonus > 0 ? `+${food.healthBonus}% ${t('health')}` : '';
+        const energyEff = food.energyBonus > 0 ? `+${food.energyBonus}% ${t('energy')}` : '';
+        const extra = [healthEff, energyEff].filter(Boolean).join(' • ');
+        if (extra) {
+            uictx.fillStyle = '#38b2ac';
+            uictx.fillText(extra, 76, fy + 62);
+        }
+
+        // Buy & Feed Button
+        const btnW = 95;
+        const btnH = 48;
+        const btnX = LOGICAL_WIDTH - 122;
+        const btnY = fy + 16;
+        const btnColor = canAfford ? '#38a169' : '#4a5568';
+        drawPixelButton(btnX, btnY, btnW, btnH, '🦴 ' + food.price, btnColor);
+        registerHitbox('feed_' + food.id, btnX, btnY, btnW, btnH, { food });
+    });
+
+    // Back button
+    drawPixelButton(16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46, t('back_home'), '#e53e3e');
+    registerHitbox('goto_dashboard', 16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46);
 }
 
 // --- SCREEN: WARDROBE & STORE ---
@@ -3189,13 +3685,13 @@ function drawMinigamesMenuHUD() {
     uictx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
 
     uictx.fillStyle = '#00f0ff';
-    uictx.font = 'bold 26px "Courier New", monospace';
+    uictx.font = 'bold 24px "Courier New", monospace';
     uictx.textAlign = 'center';
-    uictx.fillText(t('arcade_title'), LOGICAL_WIDTH / 2, 48);
+    uictx.fillText(t('arcade_title'), LOGICAL_WIDTH / 2, 40);
 
     uictx.fillStyle = '#a0aec0';
-    uictx.font = 'bold 13px "Courier New", monospace';
-    uictx.fillText(t('arcade_subtitle'), LOGICAL_WIDTH / 2, 72);
+    uictx.font = 'bold 11px "Courier New", monospace';
+    uictx.fillText(t('arcade_subtitle'), LOGICAL_WIDTH / 2, 60);
 
     const games = [
         {
@@ -3225,41 +3721,76 @@ function drawMinigamesMenuHUD() {
             desc: t('mg_lane_desc'),
             color: '#05ffa1',
             highScore: state.highScores.MG_LANE || 0
+        },
+        {
+            type: SCREENS.MG_GUESS,
+            title: t('mg_guess_title'),
+            desc: t('mg_guess_desc'),
+            color: '#38b2ac',
+            highScore: state.highScores.MG_GUESS || 0
+        },
+        {
+            type: SCREENS.MG_BOUNCE,
+            title: t('mg_bounce_title'),
+            desc: t('mg_bounce_desc'),
+            color: '#e53e3e',
+            highScore: state.highScores.MG_BOUNCE || 0
         }
     ];
 
     games.forEach((g, idx) => {
-        const gy = 100 + idx * 126;
+        const col = idx % 2;
+        const row = Math.floor(idx / 2);
+        const gx = 16 + col * 198;
+        const gy = 76 + row * 190;
+        const gw = 190;
+        const gh = 180;
 
         uictx.fillStyle = '#14182c';
-        uictx.fillRect(20, gy, LOGICAL_WIDTH - 40, 112);
+        uictx.fillRect(gx, gy, gw, gh);
         uictx.strokeStyle = g.color;
-        uictx.lineWidth = 2;
-        uictx.strokeRect(20, gy, LOGICAL_WIDTH - 40, 112);
+        uictx.lineWidth = 1.5;
+        uictx.strokeRect(gx, gy, gw, gh);
+
+        // Header accent
+        uictx.fillStyle = g.color;
+        uictx.fillRect(gx, gy, gw, 4);
 
         uictx.fillStyle = g.color;
-        uictx.font = 'bold 15px "Courier New", monospace';
+        uictx.font = 'bold 11px "Courier New", monospace';
         uictx.textAlign = 'left';
-        uictx.fillText(g.title, 35, gy + 30);
+        uictx.fillText(g.title, gx + 8, gy + 22);
 
         uictx.fillStyle = '#cbd5e0';
-        uictx.font = '12px "Courier New", monospace';
-        uictx.fillText(g.desc, 35, gy + 52);
+        uictx.font = '10px "Courier New", monospace';
+        const words = g.desc.split(' ');
+        let line1 = '', line2 = '';
+        for (const w of words) {
+            if ((line1 + w).length < 24) line1 += w + ' ';
+            else line2 += w + ' ';
+        }
+        uictx.fillText(line1, gx + 8, gy + 42);
+        uictx.fillText(line2, gx + 8, gy + 56);
 
         uictx.fillStyle = '#ffd700';
-        uictx.font = 'bold 13px "Courier New", monospace';
-        uictx.fillText('🏆 ' + t('record') + ': ' + g.highScore, 35, gy + 86);
+        uictx.font = 'bold 11px "Courier New", monospace';
+        uictx.fillText('🏆 ' + t('record') + ': ' + g.highScore, gx + 8, gy + 120);
 
-        drawPixelButton(LOGICAL_WIDTH - 130, gy + 62, 95, 36, t('play'), g.color);
-        registerHitbox('start_' + g.type, 20, gy, LOGICAL_WIDTH - 40, 112, { type: g.type });
+        drawPixelButton(gx + 10, gy + 134, gw - 20, 36, t('play'), g.color);
+        registerHitbox('start_' + g.type, gx, gy, gw, gh, { type: g.type });
     });
 
-    drawPixelButton(20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46, t('back_home'), '#e53e3e');
-    registerHitbox('goto_dashboard', 20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46);
+    drawPixelButton(16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46, t('back_home'), '#e53e3e');
+    registerHitbox('goto_dashboard', 16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46);
 }
 
 // --- SCREEN: ACTIVE MINIGAME HUD ---
 function drawActiveMinigameHUD(timeSec) {
+    if (minigameState.type === SCREENS.MG_GUESS) {
+        drawMinigameGuessHUD(timeSec);
+        return;
+    }
+
     let shakeX = 0, shakeY = 0;
     if (minigameState.screenShake > 0) {
         shakeX = (Math.random() - 0.5) * minigameState.screenShake;
@@ -3355,7 +3886,38 @@ function drawActiveMinigameHUD(timeSec) {
             uictx.strokeStyle = '#ffffff';
             uictx.lineWidth = 2;
             uictx.strokeRect(-e.w / 2, -e.h / 2, e.w, e.h);
+        } else if (minigameState.type === SCREENS.MG_BOUNCE) {
+            uictx.fillStyle = e.color;
+            uictx.fillRect(-e.w / 2, -e.h / 2, e.w, e.h);
+            uictx.strokeStyle = '#ffffff';
+            uictx.lineWidth = 1.5;
+            uictx.strokeRect(-e.w / 2, -e.h / 2, e.w, e.h);
+            uictx.fillStyle = '#ffd700';
+            uictx.font = '16px sans-serif';
+            uictx.textAlign = 'center';
+            uictx.textBaseline = 'middle';
+            uictx.fillText('🦴', 0, 0);
         }
+        uictx.restore();
+    }
+
+    if (minigameState.type === SCREENS.MG_BOUNCE) {
+        // Draw bouncing golden bone / ball
+        uictx.save();
+        uictx.translate(minigameState.ballX, minigameState.ballY);
+        uictx.rotate(timeSec * 6);
+        uictx.fillStyle = '#ffd700';
+        uictx.beginPath();
+        uictx.arc(0, 0, minigameState.ballRadius, 0, Math.PI * 2);
+        uictx.fill();
+        uictx.strokeStyle = '#ffffff';
+        uictx.lineWidth = 2;
+        uictx.stroke();
+        uictx.fillStyle = '#1a202c';
+        uictx.font = '12px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.textBaseline = 'middle';
+        uictx.fillText('🦴', 0, 0);
         uictx.restore();
     }
 
@@ -3397,6 +3959,11 @@ function drawActiveMinigameHUD(timeSec) {
         uictx.textAlign = 'right';
         uictx.font = 'bold 18px "Courier New", monospace';
         uictx.fillText('⏱ ' + Math.ceil(minigameState.timer) + 's', LOGICAL_WIDTH - 16, 36);
+    } else if (minigameState.type === SCREENS.MG_BOUNCE) {
+        uictx.font = '16px sans-serif';
+        uictx.textAlign = 'right';
+        const hearts = '❤️'.repeat(Math.max(0, minigameState.lives));
+        uictx.fillText(hearts, LOGICAL_WIDTH - 16, 36);
     } else {
         uictx.fillStyle = '#a0aec0';
         uictx.textAlign = 'right';
@@ -3470,6 +4037,168 @@ function drawActiveMinigameHUD(timeSec) {
     }
 
     uictx.restore();
+}
+
+// --- SCREEN: RETRO 1996 TAMAGOTCHI GUESS MINIGAME ---
+function drawMinigameGuessHUD(timeSec) {
+    uictx.fillStyle = '#0a0d18';
+    uictx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+    // Top Bar
+    uictx.fillStyle = 'rgba(15, 17, 30, 0.9)';
+    uictx.fillRect(0, 0, LOGICAL_WIDTH, 56);
+    uictx.strokeStyle = '#38b2ac';
+    uictx.lineWidth = 2;
+    uictx.strokeRect(0, 0, LOGICAL_WIDTH, 56);
+
+    uictx.fillStyle = '#00f0ff';
+    uictx.font = 'bold 18px "Courier New", monospace';
+    uictx.textAlign = 'left';
+    uictx.fillText(t('score') + ': ' + minigameState.score, 16, 36);
+
+    uictx.fillStyle = '#ffd700';
+    uictx.font = 'bold 16px "Courier New", monospace';
+    uictx.textAlign = 'right';
+    uictx.fillText(t('round') + ' ' + minigameState.guessRound + ' / 5', LOGICAL_WIDTH - 16, 36);
+
+    // Retro 1996 Tamagotchi Egg Bezel Housing
+    const bezelX = 35;
+    const bezelY = 75;
+    const bezelW = LOGICAL_WIDTH - 70;
+    const bezelH = 380;
+
+    uictx.fillStyle = '#fce4ec';
+    uictx.beginPath();
+    uictx.ellipse(LOGICAL_WIDTH / 2, bezelY + bezelH / 2, bezelW / 2, bezelH / 2, 0, 0, Math.PI * 2);
+    uictx.fill();
+    uictx.strokeStyle = '#f48fb1';
+    uictx.lineWidth = 8;
+    uictx.stroke();
+
+    // Inner Green LCD Screen (authentic 1996 dot-matrix)
+    const lcdX = 75;
+    const lcdY = bezelY + 60;
+    const lcdW = LOGICAL_WIDTH - 150;
+    const lcdH = 240;
+
+    uictx.fillStyle = '#9fb388';
+    uictx.fillRect(lcdX, lcdY, lcdW, lcdH);
+    uictx.strokeStyle = '#2b331f';
+    uictx.lineWidth = 4;
+    uictx.strokeRect(lcdX, lcdY, lcdW, lcdH);
+
+    // LCD dot grid scanlines
+    uictx.fillStyle = 'rgba(43, 51, 31, 0.08)';
+    for (let y = lcdY; y < lcdY + lcdH; y += 4) {
+        uictx.fillRect(lcdX, y, lcdW, 1.5);
+    }
+
+    // Top Tamagotchi LCD Icon bar
+    const lcdIcons = ['🥣', '💡', '🎮', '💊', '🫧', '⚖️', '📢', '🚨'];
+    uictx.font = '14px sans-serif';
+    uictx.textAlign = 'center';
+    lcdIcons.forEach((icon, i) => {
+        const ix = lcdX + 16 + i * ((lcdW - 32) / 7);
+        uictx.fillText(icon, ix, lcdY + 20);
+    });
+
+    // Pet in center of LCD
+    const petCenterX = LOGICAL_WIDTH / 2;
+    const petCenterY = lcdY + 130;
+
+    uictx.fillStyle = '#222b17';
+    if (minigameState.guessPhase === 'waiting') {
+        const bob = Math.sin(timeSec * 6) * 3;
+        uictx.font = '54px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.fillText('🐶', petCenterX, petCenterY + bob);
+
+        uictx.font = 'bold 13px "Courier New", monospace';
+        uictx.fillText('¿ ?', petCenterX, petCenterY - 45);
+    } else if (minigameState.guessPhase === 'revealed') {
+        const isMatch = (minigameState.guessUserChoice === minigameState.guessPetChoice);
+        const lookLeft = (minigameState.guessPetChoice === 'left');
+
+        uictx.save();
+        uictx.translate(petCenterX, petCenterY);
+        if (!lookLeft) uictx.scale(-1, 1);
+        uictx.font = '54px sans-serif';
+        uictx.textAlign = 'center';
+        uictx.fillText('🐕', 0, 0);
+        uictx.restore();
+
+        // Round outcome message
+        uictx.font = 'bold 16px "Courier New", monospace';
+        uictx.fillStyle = isMatch ? '#1a472a' : '#5c1d1d';
+        uictx.textAlign = 'center';
+        uictx.fillText(isMatch ? t('guess_win') : t('guess_miss'), petCenterX, lcdY + lcdH - 24);
+    }
+
+    // Bottom wins indicator stars
+    uictx.fillStyle = '#14182c';
+    uictx.fillRect(30, bezelY + bezelH + 16, LOGICAL_WIDTH - 60, 40);
+    uictx.strokeStyle = '#38b2ac';
+    uictx.lineWidth = 1.5;
+    uictx.strokeRect(30, bezelY + bezelH + 16, LOGICAL_WIDTH - 60, 40);
+
+    uictx.fillStyle = '#ffd700';
+    uictx.font = 'bold 15px "Courier New", monospace';
+    uictx.textAlign = 'center';
+    let stars = '';
+    for (let s = 0; s < 5; s++) {
+        stars += (s < minigameState.guessWins ? '★ ' : '☆ ');
+    }
+    uictx.fillText('VICTORIAS: ' + stars, LOGICAL_WIDTH / 2, bezelY + bezelH + 42);
+
+    // Prompt instructions or choice buttons
+    if (minigameState.guessPhase === 'waiting') {
+        const btnY = LOGICAL_HEIGHT - 135;
+        const btnW = (LOGICAL_WIDTH - 60) / 2;
+        const btnH = 50;
+
+        drawPixelButton(24, btnY, btnW, btnH, t('guess_left'), '#2b6cb0', true);
+        registerHitbox('guess_choice_left', 24, btnY, btnW, btnH);
+
+        drawPixelButton(LOGICAL_WIDTH - 24 - btnW, btnY, btnW, btnH, t('guess_right'), '#2b6cb0', true);
+        registerHitbox('guess_choice_right', LOGICAL_WIDTH - 24 - btnW, btnY, btnW, btnH);
+    } else {
+        uictx.fillStyle = '#a0aec0';
+        uictx.font = 'bold 13px "Courier New", monospace';
+        uictx.textAlign = 'center';
+        uictx.fillText('...', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 110);
+    }
+
+    // Exit Button
+    drawPixelButton(24, LOGICAL_HEIGHT - 65, LOGICAL_WIDTH - 48, 44, t('exit_home'), '#e53e3e');
+    registerHitbox('minigame_exit', 24, LOGICAL_HEIGHT - 65, LOGICAL_WIDTH - 48, 44);
+
+    if (minigameState.gameOver) {
+        const modalY = LOGICAL_HEIGHT / 2 - 140;
+        uictx.fillStyle = 'rgba(8, 10, 20, 0.92)';
+        uictx.fillRect(24, modalY, LOGICAL_WIDTH - 48, 280);
+        uictx.strokeStyle = minigameState.guessWins >= 3 ? '#05ffa1' : '#ff0055';
+        uictx.lineWidth = 3;
+        uictx.strokeRect(24, modalY, LOGICAL_WIDTH - 48, 280);
+
+        uictx.fillStyle = minigameState.guessWins >= 3 ? '#05ffa1' : '#ff0055';
+        uictx.font = 'bold 24px "Courier New", monospace';
+        uictx.textAlign = 'center';
+        const winTitle = minigameState.guessWins >= 3 ? '¡VICTORIA TOTAL! 🎉' : t('game_over');
+        uictx.fillText(winTitle, LOGICAL_WIDTH / 2, modalY + 45);
+
+        uictx.fillStyle = '#ffffff';
+        uictx.font = 'bold 16px "Courier New", monospace';
+        uictx.fillText('Aciertos: ' + minigameState.guessWins + ' / 5', LOGICAL_WIDTH / 2, modalY + 85);
+
+        uictx.fillStyle = '#ffd700';
+        uictx.fillText('+' + minigameState.earnedBones + ' ' + t('bones_won'), LOGICAL_WIDTH / 2, modalY + 120);
+
+        drawPixelButton(44, modalY + 155, LOGICAL_WIDTH - 88, 44, t('retry'), '#05ffa1', true);
+        registerHitbox('minigame_retry', 44, modalY + 155, LOGICAL_WIDTH - 88, 44);
+
+        drawPixelButton(44, modalY + 210, LOGICAL_WIDTH - 88, 44, t('exit_home'), '#3182ce');
+        registerHitbox('minigame_exit', 44, modalY + 210, LOGICAL_WIDTH - 88, 44);
+    }
 }
 
 // --- SCREEN: POLAROID PHOTO STUDIO ---

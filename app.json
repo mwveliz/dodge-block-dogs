@@ -12,7 +12,8 @@
       "backgroundColor": "#7B2CBF"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mwveliz.gameapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +22,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.mwveliz.gameapp"
+      "package": "com.mwveliz.dodgeblockdogs",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,8 +33,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "1fe367a4-c9c4-42e7-8d49-1cea591aa259"
+        "projectId": "db9218f8-438b-4ca9-b0e2-c223eb343fd4"
       }
-    }
+    },
+    "owner": "mwveliz"
   }
 }
