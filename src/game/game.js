@@ -4062,7 +4062,6 @@ function drawMinigameGuessHUD(timeSec) {
     uictx.fillText(t('round') + ' ' + minigameState.guessRound + ' / 5', LOGICAL_WIDTH - 16, 36);
 
     // Retro 1996 Tamagotchi Egg Bezel Housing
-    const bezelX = 35;
     const bezelY = 75;
     const bezelW = LOGICAL_WIDTH - 70;
     const bezelH = 380;
@@ -4381,6 +4380,13 @@ function handleInteraction(pos) {
                 saveState();
                 return;
             }
+            if (hit.id === 'toggle_lcd') {
+                state.vitals.lcdMode = !state.vitals.lcdMode;
+                audio.play('switch');
+                triggerHaptic('light');
+                saveState();
+                return;
+            }
             if (hit.id === 'prev_pet') {
                 state.activePetIndex = (state.activePetIndex - 1 + DOG_BREEDS.length) % DOG_BREEDS.length;
                 stage.spawnDog(DOG_BREEDS[state.activePetIndex], state.equipped);
@@ -4400,6 +4406,11 @@ function handleInteraction(pos) {
             }
             if (hit.id === 'goto_diary') {
                 currentScreen = SCREENS.DIARY;
+                stage.setScreen(currentScreen);
+                return;
+            }
+            if (hit.id === 'goto_kitchen') {
+                currentScreen = SCREENS.KITCHEN;
                 stage.setScreen(currentScreen);
                 return;
             }
@@ -4434,27 +4445,115 @@ function handleInteraction(pos) {
                 return;
             }
 
-            if (hit.id === 'action_feed') {
-                if (state.bones >= 5) {
-                    state.bones -= 5;
-                    state.vitals.hunger = Math.min(100, state.vitals.hunger + 25);
-                    state.vitals.happiness = Math.min(100, state.vitals.happiness + 6);
-                    audio.play('eat');
-                    triggerHaptic('medium');
-                    dogBuilder.triggerWobble(stage.currentDog, 0.4);
-                    vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.45, 12, 'spark');
-                    vfx.addText('+25 ' + t('hunger').toUpperCase(), LOGICAL_WIDTH / 2 - 45, LOGICAL_HEIGHT * 0.45 - 20, '#48bb78');
+            if (hit.id === 'action_praise') {
+                state.vitals.discipline = Math.min(100, (state.vitals.discipline || 80) + 10);
+                state.vitals.happiness = Math.min(100, state.vitals.happiness + 8);
+                audio.play('tamagotchi_chirp');
+                triggerHaptic('medium');
+                dogBuilder.triggerWobble(stage.currentDog, 0.4);
+                vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.45, 12, 'heart');
+                vfx.addText('🎓 ' + t('praise'), LOGICAL_WIDTH / 2 - 40, LOGICAL_HEIGHT * 0.45, '#ffd700');
+                saveState();
+                return;
+            }
+
+            if (hit.id === 'action_clean' || hit.id.startsWith('clean_poop_')) {
+                state.vitals.poops = 0;
+                state.vitals.hygiene = 100;
+                state.vitals.happiness = Math.min(100, state.vitals.happiness + 10);
+                audio.play('flush');
+                triggerHaptic('medium');
+                vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.5, 20, 'confetti');
+                vfx.addText(t('clean_done'), LOGICAL_WIDTH / 2 - 70, LOGICAL_HEIGHT * 0.45, '#00f0ff');
+                checkAchievement('clean_freak');
+                saveState();
+                return;
+            }
+
+            if (hit.id === 'toggle_lights') {
+                state.vitals.lightsOff = !state.vitals.lightsOff;
+                audio.play('switch');
+                triggerHaptic('light');
+                saveState();
+                return;
+            }
+
+            if (hit.id === 'action_medicine') {
+                if (state.vitals.isSick) {
+                    state.vitals.isSick = false;
+                    state.vitals.health = 100;
+                    state.vitals.happiness = Math.min(100, state.vitals.happiness + 20);
+                    audio.play('cure');
+                    triggerHaptic('success');
+                    vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.45, 16, 'spark');
+                    vfx.addText(t('cured_done'), LOGICAL_WIDTH / 2 - 70, LOGICAL_HEIGHT * 0.45, '#48bb78');
                     saveState();
                 } else {
+                    audio.play('pet');
+                    vfx.addText('❤️ ' + t('health') + ' 100%', LOGICAL_WIDTH / 2 - 60, LOGICAL_HEIGHT * 0.45, '#48bb78');
+                }
+                return;
+            }
+
+            if (hit.id.startsWith('feed_')) {
+                const food = hit.data.food;
+                if (state.bones >= food.price) {
+                    state.bones -= food.price;
+                    state.vitals.hunger = Math.min(100, state.vitals.hunger + food.hungerBonus);
+                    state.vitals.happiness = Math.min(100, state.vitals.happiness + food.happinessBonus);
+                    state.vitals.energy = Math.min(100, state.vitals.energy + food.energyBonus);
+                    state.vitals.health = Math.min(100, (state.vitals.health || 100) + food.healthBonus);
+                    state.vitals.stress = Math.max(0, state.vitals.stress - food.stressRelief);
+                    state.vitals.weightKg = Math.round(((state.vitals.weightKg || 4.5) + food.weightGain) * 10) / 10;
+                    audio.play('eat');
+                    triggerHaptic('medium');
+                    dogBuilder.triggerWobble(stage.currentDog, 0.45);
+                    vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.45, 14, 'spark');
+                    vfx.addText(t('fed_done'), LOGICAL_WIDTH / 2 - 50, LOGICAL_HEIGHT * 0.45 - 20, '#48bb78');
+                    checkAchievement('gourmet_chef');
+                    saveState();
+                } else {
+                    audio.play('hit');
                     vfx.addText(t('need_bones'), LOGICAL_WIDTH / 2 - 80, LOGICAL_HEIGHT * 0.45, '#e53e3e');
                 }
                 return;
             }
 
+            if (hit.id === 'guess_choice_left' || hit.id === 'guess_choice_right') {
+                if (minigameState.type === SCREENS.MG_GUESS && minigameState.guessPhase === 'waiting') {
+                    const userChoice = (hit.id === 'guess_choice_left' ? 'left' : 'right');
+                    const petChoice = (Math.random() < 0.5 ? 'left' : 'right');
+                    minigameState.guessUserChoice = userChoice;
+                    minigameState.guessPetChoice = petChoice;
+                    minigameState.guessPhase = 'revealed';
+                    minigameState.guessTimer = 1.35;
+                    audio.play('tamagotchi_chirp');
+
+                    if (userChoice === petChoice) {
+                        minigameState.guessWins = (minigameState.guessWins || 0) + 1;
+                        minigameState.score += 100;
+                        audio.play('coin');
+                        triggerHaptic('success');
+                        vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.45, 16, 'heart');
+                    } else {
+                        audio.play('hit');
+                        triggerHaptic('light');
+                    }
+                }
+                return;
+            }
+
+            if (hit.id === 'action_feed') {
+                currentScreen = SCREENS.KITCHEN;
+                stage.setScreen(currentScreen);
+                return;
+            }
+
             if (hit.id === 'action_rest') {
-                state.vitals.energy = Math.min(100, state.vitals.energy + 30);
+                state.vitals.lightsOff = true;
+                state.vitals.energy = Math.min(100, state.vitals.energy + 25);
                 state.vitals.stress = Math.max(0, state.vitals.stress - 20);
-                audio.play('pet');
+                audio.play('switch');
                 triggerHaptic('light');
                 vfx.addText(t('sleeping'), LOGICAL_WIDTH / 2 - 60, LOGICAL_HEIGHT * 0.45, '#00f0ff');
                 saveState();
@@ -4608,18 +4707,73 @@ window.addEventListener('pointermove', (e) => {
 window.addEventListener('pointerup', () => { isDragging = false; });
 
 window.addEventListener('keydown', (e) => {
-    if (!minigameState.active || minigameState.gameOver) return;
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        if (minigameState.type === SCREENS.MG_LANE) {
-            minigameState.laneIndex = Math.max(0, minigameState.laneIndex - 1);
-        } else {
-            minigameState.playerX = Math.max(35, minigameState.playerX - 50);
+    // If playing an active minigame
+    if (minigameState.active) {
+        if (minigameState.gameOver) {
+            if (e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+                startMinigame(minigameState.type);
+                return;
+            }
+            if (e.key === 'Escape') {
+                currentScreen = SCREENS.DASHBOARD;
+                stage.setScreen(currentScreen);
+                stage.spawnDog(DOG_BREEDS[state.activePetIndex], state.equipped);
+                return;
+            }
         }
-    } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        if (minigameState.type === SCREENS.MG_LANE) {
-            minigameState.laneIndex = Math.min(2, minigameState.laneIndex + 1);
-        } else {
-            minigameState.playerX = Math.min(LOGICAL_WIDTH - 35, minigameState.playerX + 50);
+
+        if (minigameState.type === SCREENS.MG_GUESS) {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                handleInteraction({ x: 50, y: LOGICAL_HEIGHT - 110 });
+                return;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                handleInteraction({ x: LOGICAL_WIDTH - 50, y: LOGICAL_HEIGHT - 110 });
+                return;
+            }
+        }
+
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            if (minigameState.type === SCREENS.MG_LANE) {
+                minigameState.laneIndex = Math.max(0, minigameState.laneIndex - 1);
+            } else {
+                minigameState.playerX = Math.max(35, minigameState.playerX - 50);
+            }
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            if (minigameState.type === SCREENS.MG_LANE) {
+                minigameState.laneIndex = Math.min(2, minigameState.laneIndex + 1);
+            } else {
+                minigameState.playerX = Math.min(LOGICAL_WIDTH - 35, minigameState.playerX + 50);
+            }
+        } else if (e.key === 'Escape') {
+            currentScreen = SCREENS.DASHBOARD;
+            stage.setScreen(currentScreen);
+            stage.spawnDog(DOG_BREEDS[state.activePetIndex], state.equipped);
+        }
+        return;
+    }
+
+    // Dashboard keyboard shortcuts
+    if (currentScreen === SCREENS.DASHBOARD) {
+        if (e.key === '1' || e.key === 'f' || e.key === 'F') {
+            currentScreen = SCREENS.KITCHEN;
+            stage.setScreen(currentScreen);
+        } else if (e.key === '2' || e.key === 'c' || e.key === 'C') {
+            handleInteraction({ x: 140, y: LOGICAL_HEIGHT - 150 });
+        } else if (e.key === '3' || e.key === 'l' || e.key === 'L') {
+            handleInteraction({ x: 240, y: LOGICAL_HEIGHT - 150 });
+        } else if (e.key === '4' || e.key === 'm' || e.key === 'M') {
+            handleInteraction({ x: 330, y: LOGICAL_HEIGHT - 150 });
+        } else if (e.key === '5' || e.key === 'p' || e.key === 'P') {
+            handleInteraction({ x: 60, y: LOGICAL_HEIGHT - 100 });
+        } else if (e.key === ' ' || e.key === 'Enter') {
+            currentScreen = SCREENS.MINIGAMES;
+            stage.setScreen(currentScreen);
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            state.activePetIndex = (state.activePetIndex + 1) % DOG_BREEDS.length;
+            stage.spawnDog(DOG_BREEDS[state.activePetIndex], state.equipped);
+            saveState();
         }
     } else if (e.key === 'Escape') {
         currentScreen = SCREENS.DASHBOARD;
@@ -4646,10 +4800,42 @@ handleResize();
 
 function updateVitals(dt) {
     if (currentScreen === SCREENS.DASHBOARD) {
-        state.vitals.hunger = Math.max(0, state.vitals.hunger - 0.35 * dt);
-        state.vitals.happiness = Math.max(0, state.vitals.happiness - 0.25 * dt);
-        state.vitals.energy = Math.max(0, state.vitals.energy - 0.18 * dt);
-        state.vitals.stress = Math.min(100, state.vitals.stress + 0.18 * dt);
+        const decay = state.vitals.lightsOff ? 0.35 : 1.0;
+        state.vitals.hunger = Math.max(0, state.vitals.hunger - 0.35 * dt * decay);
+        state.vitals.happiness = Math.max(0, state.vitals.happiness - 0.25 * dt * decay);
+
+        if (state.vitals.lightsOff) {
+            state.vitals.energy = Math.min(100, state.vitals.energy + 1.5 * dt);
+            state.vitals.stress = Math.max(0, state.vitals.stress - 0.8 * dt);
+        } else {
+            state.vitals.energy = Math.max(0, state.vitals.energy - 0.18 * dt);
+            state.vitals.stress = Math.min(100, state.vitals.stress + 0.18 * dt);
+        }
+
+        // Random pooping when dog is fed and lights are on
+        if (state.vitals.hunger < 80 && !state.vitals.lightsOff && Math.random() < 0.003 * dt * 60 && (state.vitals.poops || 0) < 3) {
+            state.vitals.poops = (state.vitals.poops || 0) + 1;
+            audio.play('bark');
+        }
+
+        // Hygiene decay based on poops
+        const poops = state.vitals.poops || 0;
+        if (poops > 0) {
+            state.vitals.hygiene = Math.max(0, (state.vitals.hygiene || 100) - 0.6 * dt * poops);
+            if (state.vitals.hygiene < 15 && Math.random() < 0.005) {
+                state.vitals.isSick = true;
+            }
+        } else {
+            state.vitals.hygiene = Math.max(0, (state.vitals.hygiene || 100) - 0.08 * dt);
+        }
+
+        // Sickness decay & recovery
+        if (state.vitals.isSick) {
+            state.vitals.health = Math.max(0, (state.vitals.health || 100) - 0.45 * dt);
+            state.vitals.happiness = Math.max(0, state.vitals.happiness - 0.5 * dt);
+        } else {
+            state.vitals.health = Math.min(100, (state.vitals.health || 100) + 0.1 * dt);
+        }
     }
 }
 
@@ -4671,10 +4857,12 @@ function mainGameLoop(timestamp) {
     else if (currentScreen === SCREENS.MG_CATCH) updateMinigameCatch(dt);
     else if (currentScreen === SCREENS.MG_JUMP) updateMinigameJump(dt);
     else if (currentScreen === SCREENS.MG_LANE) updateMinigameLane(dt);
+    else if (currentScreen === SCREENS.MG_GUESS) updateMinigameGuess(dt);
+    else if (currentScreen === SCREENS.MG_BOUNCE) updateMinigameBounce(dt);
 
     if (stage.currentDog && !currentScreen.startsWith('MG_')) {
         let emotion = 'normal';
-        if (state.vitals.energy < 25) emotion = 'sleepy';
+        if (state.vitals.lightsOff || state.vitals.energy < 25) emotion = 'sleepy';
         else if (state.vitals.happiness > 65) emotion = 'happy';
         dogBuilder.updateDogAnimation(stage.currentDog, dt, timeSec, 0, false, emotion);
     }
@@ -4690,6 +4878,9 @@ function mainGameLoop(timestamp) {
         case SCREENS.WARDROBE:
             drawWardrobeHUD();
             break;
+        case SCREENS.KITCHEN:
+            drawKitchenHUD();
+            break;
         case SCREENS.MINIGAMES:
             drawMinigamesMenuHUD();
             break;
@@ -4697,6 +4888,8 @@ function mainGameLoop(timestamp) {
         case SCREENS.MG_CATCH:
         case SCREENS.MG_JUMP:
         case SCREENS.MG_LANE:
+        case SCREENS.MG_GUESS:
+        case SCREENS.MG_BOUNCE:
             drawActiveMinigameHUD(timeSec);
             break;
         case SCREENS.PHOTO_STUDIO:
@@ -4708,6 +4901,33 @@ function mainGameLoop(timestamp) {
     }
 
     vfx.draw(uictx);
+
+    // Retro 1996 LCD Dot-Matrix Filter Overlay
+    if (state.vitals.lcdMode) {
+        uictx.save();
+        uictx.fillStyle = 'rgba(159, 179, 136, 0.38)';
+        uictx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        uictx.fillStyle = 'rgba(30, 42, 20, 0.12)';
+        for (let y = 0; y < LOGICAL_HEIGHT; y += 3) {
+            uictx.fillRect(0, y, LOGICAL_WIDTH, 1);
+        }
+
+        uictx.strokeStyle = '#2b331f';
+        uictx.lineWidth = 8;
+        uictx.strokeRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        uictx.fillStyle = 'rgba(43, 51, 31, 0.85)';
+        uictx.fillRect(0, 0, LOGICAL_WIDTH, 18);
+        uictx.font = '11px sans-serif';
+        uictx.textAlign = 'center';
+        const retroIcons = ['🥣', '💡', '🎮', '💊', '🫧', '⚖️', '📢', '🚨'];
+        retroIcons.forEach((ico, idx) => {
+            uictx.fillText(ico, 26 + idx * ((LOGICAL_WIDTH - 52) / 7), 14);
+        });
+
+        uictx.restore();
+    }
 
     requestAnimationFrame(mainGameLoop);
 }

@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#7B2CBF"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mwveliz.gameapp"
