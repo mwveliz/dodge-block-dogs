@@ -4274,8 +4274,48 @@ function drawVitalsBar(x, y, w, h, label, value, maxVal, color, icon) {
     uictx.restore();
 }
 
+// --- EVALUATE TAMAGOTCHI LIFE STAGE ---
+function evaluateLifeStage() {
+    const age = state.vitals.ageDays || 1;
+    const hunger = state.vitals.hunger || 0;
+    const happiness = state.vitals.happiness || 0;
+    const hygiene = state.vitals.hygiene || 0;
+    const health = state.vitals.health || 0;
+    const discipline = state.vitals.discipline || 80;
+    const careScore = (hunger + happiness + hygiene + health + discipline) / 5;
+
+    let targetStage = 'puppy';
+    if (age >= 7 && careScore >= 88 && discipline >= 85) {
+        targetStage = 'hero';
+    } else if (age >= 7) {
+        targetStage = 'adult';
+    } else if (age >= 3) {
+        targetStage = 'puppy';
+    } else {
+        targetStage = 'baby';
+    }
+
+    if (state.vitals.stage !== targetStage) {
+        state.vitals.stage = targetStage;
+        if (!state.stats.evolvedStages) state.stats.evolvedStages = [];
+        if (!state.stats.evolvedStages.includes(targetStage)) {
+            state.stats.evolvedStages.push(targetStage);
+        }
+        audio.play('fanfare');
+        triggerHaptic('success');
+        vfx.emit(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.45, 30, 'gold');
+        vfx.addText(t('evolution_banner'), LOGICAL_WIDTH / 2 - 100, LOGICAL_HEIGHT * 0.45 - 30, '#ffd700');
+        if (targetStage === 'hero') {
+            checkAchievement('noble_hero');
+        }
+        stage.spawnDog(DOG_BREEDS[state.activePetIndex], state.equipped);
+        saveState();
+    }
+}
+
 // --- SCREEN: DASHBOARD ---
 function drawDashboardHUD(timeSec) {
+    evaluateLifeStage();
     const pet = DOG_BREEDS[state.activePetIndex];
 
     uictx.fillStyle = 'rgba(15, 17, 30, 0.9)';
@@ -4305,18 +4345,23 @@ function drawDashboardHUD(timeSec) {
     registerHitbox('toggle_lang', 174, 10, 48, 34);
 
     const lcdLabel = state.vitals.lcdMode ? t('tamagotchi_3d') : t('tamagotchi_lcd');
-    drawPixelButton(226, 10, 54, 34, lcdLabel, state.vitals.lcdMode ? '#48bb78' : '#1f2438', state.vitals.lcdMode);
-    registerHitbox('toggle_lcd', 226, 10, 54, 34);
+    drawPixelButton(226, 10, 50, 34, lcdLabel, state.vitals.lcdMode ? '#48bb78' : '#1f2438', state.vitals.lcdMode);
+    registerHitbox('toggle_lcd', 226, 10, 50, 34);
 
-    drawPixelButton(284, 10, 32, 34, '📖', '#d69e2e');
-    registerHitbox('goto_diary', 284, 10, 32, 34);
+    drawPixelButton(280, 10, 32, 34, '📖', '#d69e2e');
+    registerHitbox('goto_diary', 280, 10, 32, 34);
 
-    drawPixelButton(320, 10, 32, 34, '📸', '#805ad5');
-    registerHitbox('goto_studio', 320, 10, 32, 34);
+    drawPixelButton(316, 10, 32, 34, '📸', '#805ad5');
+    registerHitbox('goto_studio', 316, 10, 32, 34);
+
+    const weatherIcons = { day: '☀️', sunset: '🌇', night: '🌙', rain: '🌧️' };
+    const curWeather = state.vitals.weather || 'day';
+    drawPixelButton(352, 10, 32, 34, weatherIcons[curWeather] || '☀️', '#1f2438');
+    registerHitbox('toggle_weather', 352, 10, 32, 34);
 
     const soundText = audio.muted ? '🔇' : '🔊';
-    drawPixelButton(LOGICAL_WIDTH - 54, 10, 44, 34, soundText, '#1f2438');
-    registerHitbox('toggle_sound', LOGICAL_WIDTH - 54, 10, 44, 34);
+    drawPixelButton(LOGICAL_WIDTH - 32, 10, 28, 34, soundText, '#1f2438');
+    registerHitbox('toggle_sound', LOGICAL_WIDTH - 32, 10, 28, 34);
 
     // Left Column: Vitals Bars
     const vx = 14;
@@ -4346,8 +4391,10 @@ function drawDashboardHUD(timeSec) {
     uictx.fillStyle = '#cbd5e0';
     uictx.fillText('🎂 ' + t('age') + ': ' + (state.vitals.ageDays || 1) + ' ' + t('days'), cx + 10, cy + 40);
 
-    uictx.fillStyle = '#a0aec0';
-    uictx.fillText(t('stage') + ': ' + t('stage_puppy'), cx + 10, cy + 60);
+    const currentStage = state.vitals.stage || 'puppy';
+    const stageName = (currentStage === 'baby' ? t('stage_baby') : currentStage === 'adult' ? t('stage_adult') : currentStage === 'hero' ? t('stage_hero') : t('stage_puppy'));
+    uictx.fillStyle = currentStage === 'hero' ? '#ffd700' : '#00f0ff';
+    uictx.fillText(t('stage') + ': ' + stageName, cx + 10, cy + 60);
 
     if (state.vitals.isSick) {
         const pulse = 0.6 + 0.4 * Math.sin(timeSec * 7);
@@ -4362,9 +4409,9 @@ function drawDashboardHUD(timeSec) {
     // Floor Poops & Buzzing Flies
     const poopsCount = state.vitals.poops || 0;
     const poopPositions = [
-        { x: LOGICAL_WIDTH * 0.22, y: LOGICAL_HEIGHT * 0.58 },
-        { x: LOGICAL_WIDTH * 0.74, y: LOGICAL_HEIGHT * 0.56 },
-        { x: LOGICAL_WIDTH * 0.32, y: LOGICAL_HEIGHT * 0.64 }
+        { x: LOGICAL_WIDTH * 0.22, y: LOGICAL_HEIGHT * 0.56 },
+        { x: LOGICAL_WIDTH * 0.74, y: LOGICAL_HEIGHT * 0.54 },
+        { x: LOGICAL_WIDTH * 0.32, y: LOGICAL_HEIGHT * 0.62 }
     ];
 
     for (let i = 0; i < Math.min(poopsCount, 3); i++) {
@@ -4373,7 +4420,6 @@ function drawDashboardHUD(timeSec) {
         uictx.textAlign = 'center';
         uictx.fillText('💩', pos.x, pos.y);
 
-        // Buzzing flies around poop
         for (let f = 0; f < 2; f++) {
             const flyAngle = timeSec * 8 + i * 2 + f * Math.PI;
             const flyDist = 14 + f * 5;
@@ -4396,17 +4442,25 @@ function drawDashboardHUD(timeSec) {
         uictx.fillText('💀', LOGICAL_WIDTH / 2, skullY);
     }
 
+    // Raindrop particles if weather is rain
+    if (state.vitals.weather === 'rain') {
+        uictx.fillStyle = 'rgba(100, 200, 255, 0.45)';
+        for (let r = 0; r < 25; r++) {
+            const rx = ((r * 29 + timeSec * 140) % LOGICAL_WIDTH);
+            const ry = ((r * 47 + timeSec * 380) % LOGICAL_HEIGHT);
+            uictx.fillRect(rx, ry, 1.5, 12);
+        }
+    }
+
     // Nighttime Lights Off Overlay
     if (state.vitals.lightsOff) {
         uictx.fillStyle = 'rgba(6, 8, 22, 0.78)';
         uictx.fillRect(0, 54, LOGICAL_WIDTH, LOGICAL_HEIGHT - 54);
 
-        // Glowing Moon
         uictx.font = '38px sans-serif';
         uictx.textAlign = 'center';
         uictx.fillText('🌙', LOGICAL_WIDTH - 60, 110);
 
-        // Floating Zzz
         const zOff = (timeSec * 35) % 80;
         uictx.fillStyle = 'rgba(0, 240, 255, 0.85)';
         uictx.font = 'bold 22px "Courier New", monospace';
@@ -4418,14 +4472,26 @@ function drawDashboardHUD(timeSec) {
 
     // Dog Nameplate
     uictx.fillStyle = 'rgba(10, 14, 26, 0.78)';
-    uictx.fillRect(LOGICAL_WIDTH / 2 - 110, LOGICAL_HEIGHT * 0.62, 220, 26);
+    uictx.fillRect(LOGICAL_WIDTH / 2 - 110, LOGICAL_HEIGHT * 0.58, 220, 26);
     uictx.strokeStyle = '#2d3748';
     uictx.lineWidth = 1;
-    uictx.strokeRect(LOGICAL_WIDTH / 2 - 110, LOGICAL_HEIGHT * 0.62, 220, 26);
+    uictx.strokeRect(LOGICAL_WIDTH / 2 - 110, LOGICAL_HEIGHT * 0.58, 220, 26);
     uictx.fillStyle = '#00f0ff';
     uictx.font = 'bold 14px "Courier New", monospace';
     uictx.textAlign = 'center';
-    uictx.fillText('★ ' + getDogName(pet) + ' ★', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.62 + 18);
+    uictx.fillText('★ ' + getDogName(pet) + ' ★', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT * 0.58 + 18);
+
+    // Row 0: Interactive Room Toys & Park Walk
+    const toyY = LOGICAL_HEIGHT - 216;
+    const toyH = 38;
+    drawPixelButton(14, toyY, 124, toyH, t('toy_duck'), '#3b4252');
+    registerHitbox('toy_duck', 14, toyY, 124, toyH);
+
+    drawPixelButton(144, toyY, 124, toyH, t('toy_frisbee'), '#3b4252');
+    registerHitbox('toy_frisbee', 144, toyY, 124, toyH);
+
+    drawPixelButton(274, toyY, 132, toyH, t('park_walk'), '#2f855a', true);
+    registerHitbox('goto_park', 274, toyY, 132, toyH);
 
     // Row 1: Care Action Buttons (Kitchen, Clean, Lights, Medicine)
     const btnY1 = LOGICAL_HEIGHT - 172;
