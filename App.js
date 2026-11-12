@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0c16',
     paddingTop: Platform.OS === 'android' ? (RNStatusBar.currentHeight || 28) : 0,
+    paddingBottom: Platform.OS === 'android' ? 12 : 0,
   },
   container: {
     flex: 1,

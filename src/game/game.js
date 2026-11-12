@@ -4631,7 +4631,7 @@ function drawDashboardHUD(timeSec) {
     // Row 3: Master Arcade Button
     const arcadeY = LOGICAL_HEIGHT - 74;
     drawPixelButton(14, arcadeY, LOGICAL_WIDTH - 28, 54, '🕹️ ' + t('arcade') + ' ▶', '#05ffa1', true);
-    registerHitbox('goto_minigames', 14, arcadeY, LOGICAL_WIDTH - 28, 54);
+    registerHitbox('goto_minigames', 14, arcadeY, LOGICAL_WIDTH - 28, 54 + 20);
 }
 
 // --- SCREEN: TAMAGOTCHI KITCHEN & PANTRY (ZERO MICROTRANSACTIONS) ---
@@ -4672,7 +4672,7 @@ function drawKitchenHUD() {
     // Foods List
     FOOD_MENU.forEach((food, idx) => {
         const fy = 106 + idx * 88;
-        if (fy + 82 > LOGICAL_HEIGHT - 65) return;
+        if (fy + 82 > LOGICAL_HEIGHT - 85) return;
 
         const canAfford = state.bones >= food.price;
         uictx.fillStyle = '#14182a';
@@ -4713,12 +4713,13 @@ function drawKitchenHUD() {
         const btnY = fy + 16;
         const btnColor = canAfford ? '#38a169' : '#4a5568';
         drawPixelButton(btnX, btnY, btnW, btnH, '🦴 ' + food.price, btnColor);
-        registerHitbox('feed_' + food.id, btnX, btnY, btnW, btnH, { food });
+        registerHitbox('feed_' + food.id, btnX - 6, btnY - 4, btnW + 12, btnH + 8, { food });
     });
 
     // Back button
-    drawPixelButton(16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46, t('back_home'), '#e53e3e');
-    registerHitbox('goto_dashboard', 16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46);
+    const backY = LOGICAL_HEIGHT - 74;
+    drawPixelButton(16, backY, LOGICAL_WIDTH - 32, 48, t('back_home'), '#e53e3e');
+    registerHitbox('goto_dashboard', 16, backY, LOGICAL_WIDTH - 32, 48 + 26);
 }
 
 // --- SCREEN: WARDROBE & STORE ---
@@ -4760,7 +4761,7 @@ function drawWardrobeHUD() {
 
     items.forEach((item, idx) => {
         const iy = listY + idx * 56;
-        if (iy + 50 > LOGICAL_HEIGHT - 70) return;
+        if (iy + 50 > LOGICAL_HEIGHT - 85) return;
 
         let isEquipped = false;
         let isUnlocked = item.unlocked;
@@ -4798,15 +4799,16 @@ function drawWardrobeHUD() {
             drawPixelButton(btnX, iy + 8, btnW, 34, t('equipped'), '#05ffa1', true);
         } else if (isUnlocked) {
             drawPixelButton(btnX, iy + 8, btnW, 34, t('equip'), '#3182ce');
-            registerHitbox('equip_' + wardrobeTab + '_' + (item.id || idx), btnX, iy + 8, btnW, 34, { item, idx });
+            registerHitbox('equip_' + wardrobeTab + '_' + (item.id || idx), btnX - 4, iy + 4, btnW + 8, 42, { item, idx });
         } else {
             drawPixelButton(btnX, iy + 8, btnW, 34, '🦴 ' + item.price, '#d69e2e');
-            registerHitbox('buy_' + wardrobeTab + '_' + (item.id || idx), btnX, iy + 8, btnW, 34, { item, idx });
+            registerHitbox('buy_' + wardrobeTab + '_' + (item.id || idx), btnX - 4, iy + 4, btnW + 8, 42, { item, idx });
         }
     });
 
-    drawPixelButton(20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46, t('back_home'), '#e53e3e');
-    registerHitbox('goto_dashboard', 20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46);
+    const backY = LOGICAL_HEIGHT - 74;
+    drawPixelButton(20, backY, LOGICAL_WIDTH - 40, 48, t('back_home'), '#e53e3e');
+    registerHitbox('goto_dashboard', 20, backY, LOGICAL_WIDTH - 40, 48 + 26);
 }
 
 // --- SCREEN: ARCADE MINIGAME MENU ---
@@ -4942,14 +4944,16 @@ function drawMinigamesMenuHUD() {
 
     // Page switcher tabs
     const pageBtnW = (LOGICAL_WIDTH - 40) / 2;
-    drawPixelButton(16, LOGICAL_HEIGHT - 108, pageBtnW, 38, '◀ PÁG 1 (1-6)', arcadeMenuPage === 0 ? '#3182ce' : '#1a202c', arcadeMenuPage === 0);
-    registerHitbox('arcade_page_0', 16, LOGICAL_HEIGHT - 108, pageBtnW, 38);
+    const pageY = LOGICAL_HEIGHT - 120;
+    drawPixelButton(16, pageY, pageBtnW, 38, '◀ PÁG 1 (1-6)', arcadeMenuPage === 0 ? '#3182ce' : '#1a202c', arcadeMenuPage === 0);
+    registerHitbox('arcade_page_0', 16, pageY, pageBtnW, 38);
 
-    drawPixelButton(LOGICAL_WIDTH / 2 + 4, LOGICAL_HEIGHT - 108, pageBtnW, 38, 'PÁG 2 (7-10) ▶', arcadeMenuPage === 1 ? '#3182ce' : '#1a202c', arcadeMenuPage === 1);
-    registerHitbox('arcade_page_1', LOGICAL_WIDTH / 2 + 4, LOGICAL_HEIGHT - 108, pageBtnW, 38);
+    drawPixelButton(LOGICAL_WIDTH / 2 + 4, pageY, pageBtnW, 38, 'PÁG 2 (7-10) ▶', arcadeMenuPage === 1 ? '#3182ce' : '#1a202c', arcadeMenuPage === 1);
+    registerHitbox('arcade_page_1', LOGICAL_WIDTH / 2 + 4, pageY, pageBtnW, 38);
 
-    drawPixelButton(16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46, t('back_home'), '#e53e3e');
-    registerHitbox('goto_dashboard', 16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46);
+    const backY = LOGICAL_HEIGHT - 74;
+    drawPixelButton(16, backY, LOGICAL_WIDTH - 32, 48, t('back_home'), '#e53e3e');
+    registerHitbox('goto_dashboard', 16, backY, LOGICAL_WIDTH - 32, 48 + 26);
 }
 
 // --- SCREEN: ACTIVE MINIGAME HUD ---
@@ -5565,7 +5569,7 @@ function drawMinigameGuessHUD(timeSec) {
 
     // Prompt instructions or choice buttons
     if (minigameState.guessPhase === 'waiting') {
-        const btnY = LOGICAL_HEIGHT - 135;
+        const btnY = LOGICAL_HEIGHT - 138;
         const btnW = (LOGICAL_WIDTH - 60) / 2;
         const btnH = 50;
 
@@ -5582,8 +5586,9 @@ function drawMinigameGuessHUD(timeSec) {
     }
 
     // Exit Button
-    drawPixelButton(24, LOGICAL_HEIGHT - 65, LOGICAL_WIDTH - 48, 44, t('exit_home'), '#e53e3e');
-    registerHitbox('minigame_exit', 24, LOGICAL_HEIGHT - 65, LOGICAL_WIDTH - 48, 44);
+    const exitY = LOGICAL_HEIGHT - 74;
+    drawPixelButton(24, exitY, LOGICAL_WIDTH - 48, 48, t('exit_home'), '#e53e3e');
+    registerHitbox('minigame_exit', 24, exitY, LOGICAL_WIDTH - 48, 48 + 26);
 
     if (minigameState.gameOver) {
         const modalY = LOGICAL_HEIGHT / 2 - 140;
@@ -5719,14 +5724,16 @@ function drawParkWalkHUD(timeSec) {
 
     // Interactive Activity Buttons
     const btnW = (LOGICAL_WIDTH - 44) / 2;
-    drawPixelButton(16, LOGICAL_HEIGHT - 125, btnW, 52, '🔍 ' + t('sniff_btn'), '#38a169', true);
-    registerHitbox('park_action_sniff', 16, LOGICAL_HEIGHT - 125, btnW, 52);
+    const actY = LOGICAL_HEIGHT - 138;
+    drawPixelButton(16, actY, btnW, 52, '🔍 ' + t('sniff_btn'), '#38a169', true);
+    registerHitbox('park_action_sniff', 16, actY, btnW, 52);
 
-    drawPixelButton(LOGICAL_WIDTH / 2 + 6, LOGICAL_HEIGHT - 125, btnW, 52, '🐾 ' + t('greet_btn'), '#3182ce', true);
-    registerHitbox('park_action_greet', LOGICAL_WIDTH / 2 + 6, LOGICAL_HEIGHT - 125, btnW, 52);
+    drawPixelButton(LOGICAL_WIDTH / 2 + 6, actY, btnW, 52, '🐾 ' + t('greet_btn'), '#3182ce', true);
+    registerHitbox('park_action_greet', LOGICAL_WIDTH / 2 + 6, actY, btnW, 52);
 
-    drawPixelButton(16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46, t('back_home'), '#e53e3e');
-    registerHitbox('goto_dashboard', 16, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 32, 46);
+    const backY = LOGICAL_HEIGHT - 74;
+    drawPixelButton(16, backY, LOGICAL_WIDTH - 32, 48, t('back_home'), '#e53e3e');
+    registerHitbox('goto_dashboard', 16, backY, LOGICAL_WIDTH - 32, 48 + 26);
 }
 
 function drawParkWalkDog(uictx, timeSec) {
@@ -5971,10 +5978,10 @@ function drawStudioHUD() {
     });
 
     drawPixelButton(20, LOGICAL_HEIGHT - 80, LOGICAL_WIDTH / 2 - 25, 46, t('take_photo'), '#05ffa1', true);
-    registerHitbox('snap_photo', 20, LOGICAL_HEIGHT - 80, LOGICAL_WIDTH / 2 - 25, 46);
+    registerHitbox('snap_photo', 20, LOGICAL_HEIGHT - 80, LOGICAL_WIDTH / 2 - 25, 46 + 34);
 
     drawPixelButton(LOGICAL_WIDTH / 2 + 5, LOGICAL_HEIGHT - 80, LOGICAL_WIDTH / 2 - 25, 46, t('back'), '#e53e3e');
-    registerHitbox('goto_dashboard', LOGICAL_WIDTH / 2 + 5, LOGICAL_HEIGHT - 80, LOGICAL_WIDTH / 2 - 25, 46);
+    registerHitbox('goto_dashboard', LOGICAL_WIDTH / 2 + 5, LOGICAL_HEIGHT - 80, LOGICAL_WIDTH / 2 - 25, 46 + 34);
 }
 
 // --- SCREEN: DOG DIARY & ACHIEVEMENTS ---
@@ -6014,7 +6021,7 @@ function drawDiaryHUD() {
 
     ACHIEVEMENTS.forEach((ach, idx) => {
         const ay = 200 + idx * 56;
-        if (ay + 50 > LOGICAL_HEIGHT - 70) return;
+        if (ay + 50 > LOGICAL_HEIGHT - 85) return;
 
         uictx.fillStyle = ach.completed ? '#143828' : '#14182a';
         uictx.fillRect(20, ay, LOGICAL_WIDTH - 40, 50);
@@ -6036,8 +6043,9 @@ function drawDiaryHUD() {
         uictx.fillText('+' + ach.reward + ' 🦴', LOGICAL_WIDTH - 35, ay + 30);
     });
 
-    drawPixelButton(20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46, t('back_home'), '#e53e3e');
-    registerHitbox('goto_dashboard', 20, LOGICAL_HEIGHT - 60, LOGICAL_WIDTH - 40, 46);
+    const backY = LOGICAL_HEIGHT - 74;
+    drawPixelButton(20, backY, LOGICAL_WIDTH - 40, 48, t('back_home'), '#e53e3e');
+    registerHitbox('goto_dashboard', 20, backY, LOGICAL_WIDTH - 40, 48 + 26);
 }
 
 // --- 12. INPUT & INTERACTION ---
